@@ -32,6 +32,10 @@ def main():
     ap.add_argument("--r-invest-real", type=float, default=None,
                     help="固定租方真实投资收益率(如 0.015), 替代历史抽样; "
                          "用于可投资渠道受限的市场")
+    ap.add_argument("--infl-fixed", type=float, default=None,
+                    help="把蒙特卡洛的窗口通胀固定为该值(如 0.005); "
+                         "浮动利率按揭市场(如中国LPR)应设置, 以关闭固定利率"
+                         "按揭独有的通胀对冲通道")
     ap.add_argument("--sims", type=int, default=5000)
     a = ap.parse_args()
 
@@ -51,7 +55,7 @@ def main():
     g_star_real = breakeven_growth_real(s)
     p_uncond, n_uncond = hist.prob_exceed(g_star_real, a.hold)
     mc = run(s, hist, n=a.sims, tercile=tercile, eq_share=a.eq_share,
-             r_invest_real=a.r_invest_real)
+             r_invest_real=a.r_invest_real, infl_fixed=a.infl_fixed)
 
     W = 62
     print("=" * W)

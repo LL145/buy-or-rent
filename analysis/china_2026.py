@@ -67,7 +67,7 @@ for name, ry, ry_typ in CITIES:
            "g_star_real": round(g_star_r, 4),
            "p_hist_uncond": round(p_u, 3), "p_hist_cond": round(p_c, 3)}
     for label, rr in INVESTORS:
-        mc = run(s, hist, n=4000, tercile=tc, r_invest_real=rr, seed=11)
+        mc = run(s, hist, n=4000, tercile=tc, r_invest_real=rr, infl_fixed=0.005, seed=11)
         key = "conservative" if rr == 0.015 else "balanced"
         row[f"p_buy_{key}"] = round(mc["p_buy_wins"], 3)
         row[f"gap_median_{key}"] = round(
