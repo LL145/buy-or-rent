@@ -1,0 +1,67 @@
+{
+  "n_countries": 18,
+  "years": [
+    1870,
+    2020
+  ],
+  "real_hp_growth_pre1950": 0.00326,
+  "real_hp_growth_post1950": 0.02349,
+  "real_hp_growth_full": 0.01176,
+  "mean_rent_yield": 0.05075,
+  "mean_real_capgain": 0.02045,
+  "mean_housing_tr_real": 0.07008,
+  "mean_eq_tr_real": 0.07223,
+  "housing_tr_10y_std": 0.03768,
+  "eq_tr_10y_std": 0.05764,
+  "mean_reversion": {
+    "5": {
+      "lambda": 0.02276,
+      "r2": 0.01239,
+      "n": 1421,
+      "t": -4.2199
+    },
+    "10": {
+      "lambda": 0.01962,
+      "r2": 0.01921,
+      "n": 1304,
+      "t": -5.04939
+    }
+  },
+  "g10_quantiles": {
+    "5": -0.03448,
+    "10": -0.0231,
+    "25": -0.0074,
+    "50": 0.0101,
+    "75": 0.03237,
+    "90": 0.05543,
+    "95": 0.07087
+  },
+  "g10_prob_exceed": {
+    "0%": 0.65497,
+    "1%": 0.50132,
+    "2%": 0.3755,
+    "3%": 0.27285,
+    "4%": 0.17748,
+    "5%": 0.11987
+  },
+  "n_windows_10y": 1510,
+  "g10_by_tercile": {
+    "cheap": {
+      "median": 0.01612,
+      "p_ge_2pct": 0.46207,
+      "p_le_0": 0.31034
+    },
+    "mid": {
+      "median": 0.01062,
+      "p_ge_2pct": 0.39401,
+      "p_le_0": 0.32028
+    },
+    "dear": {
+      "median": 0.0054,
+      "p_ge_2pct": 0.27126,
+      "p_le_0": 0.41609
+    }
+  },
+  "mean_real_rent_growth": 0.00891,
+  "mean_real_wage_growth": 0.01659
+}
