@@ -29,6 +29,9 @@ def main():
     ap.add_argument("--infl", type=float, default=0.02, help="通胀假设(仅报告用)")
     ap.add_argument("--eq-share", type=float, default=0.6,
                     help="租方替代资产中股票占比(默认0.6, 其余国债)")
+    ap.add_argument("--r-invest-real", type=float, default=None,
+                    help="固定租方真实投资收益率(如 0.015), 替代历史抽样; "
+                         "用于可投资渠道受限的市场")
     ap.add_argument("--sims", type=int, default=5000)
     a = ap.parse_args()
 
@@ -47,7 +50,8 @@ def main():
     g_star = breakeven_growth(s)
     g_star_real = breakeven_growth_real(s)
     p_uncond, n_uncond = hist.prob_exceed(g_star_real, a.hold)
-    mc = run(s, hist, n=a.sims, tercile=tercile, eq_share=a.eq_share)
+    mc = run(s, hist, n=a.sims, tercile=tercile, eq_share=a.eq_share,
+             r_invest_real=a.r_invest_real)
 
     W = 62
     print("=" * W)

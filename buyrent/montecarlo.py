@@ -19,18 +19,23 @@ def nominal(real: float, infl: float) -> float:
 
 
 def run(s: Scenario, hist: History, n: int = 5000, tercile: int | None = None,
-        eq_share: float = 0.6, seed: int = 0) -> dict:
+        eq_share: float = 0.6, r_invest_real: float | None = None,
+        seed: int = 0) -> dict:
     """返回 P(买优于租) 及期末财富差(占房价%, 真实口径)的分布。
 
-    eq_share: 租方替代资产中股票占比, 其余为长期国债(同窗口, 保留相关性)。
-    tercile:  当前城市的估值三分位(None = 不加条件, 用全部历史)。
+    eq_share:       租方替代资产中股票占比, 其余为长期国债(同窗口, 保留相关性)。
+    tercile:        当前城市的估值三分位(None = 不加条件, 用全部历史)。
+    r_invest_real:  若给定, 租方投资收益率不再从历史窗口抽样, 而是固定为该
+                    真实收益率(按窗口通胀换算名义)。用于可投资渠道受限的市场
+                    (如中国居民: 存款/国债/理财的真实收益率 1–3%)。
     """
     rng = np.random.default_rng(seed)
     w = hist.sample_windows(s.hold, n, rng, tercile)
     gaps = np.empty(n)
     wins = 0
     for i, row in w.iterrows():
-        r_mix = eq_share * row.r_eq + (1 - eq_share) * row.r_bond
+        r_mix = (r_invest_real if r_invest_real is not None
+                 else eq_share * row.r_eq + (1 - eq_share) * row.r_bond)
         si = replace(
             s,
             g_house=nominal(row.g_house, row.infl),
