@@ -55,7 +55,8 @@
   `figures/`、`paper/paper.md`、`paper/paper.tex`、`README.md` 里的数字。四处数字必须一致。
 - 提交前跑 `python3 -m pytest`。
 - 论文与 README 用中文写作；代码注释和标识符用英文。
-- 开发分支：`claude/buy-rent-decision-factors-xreeta`。
+- **分支：所有改动直接提交并推到 `main`。** 除非用户明确要求，不新建分支、不开 PR。
+  推送用 `git push -u origin main`。
 
 ## 当前状态（截至 2026-08）
 
