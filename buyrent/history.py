@@ -31,9 +31,27 @@ def valuation_dev(ry_now: float, ry_typical: float) -> float:
 
 
 class History:
-    def __init__(self, windows_csv: Path | None = None):
+    """历史窗口池。可按窗口起始年限定样本期。
+
+    since/until 限定窗口的**起始年**(year0)。论文第9节第1条指出历史分布混合了
+    金本位、战争管制、战后信贷扩张与低利率等多个体制; 只用战后窗口
+    (`History(since=1950)`) 会把分布右移、对买方更有利。默认全样本, 以保守为先。
+
+    估值三分位的切点始终取自全样本, 不随 since/until 变化——"这个城市相对自己的
+    历史贵不贵"是一个固定的分类标准, 不应随查询的样本期漂移。
+    """
+
+    def __init__(self, windows_csv: Path | None = None,
+                 since: int | None = None, until: int | None = None):
         base = windows_csv or ROOT / "data" / "derived" / "windows.csv"
         self.win = pd.read_csv(base)
+        self.since, self.until = since, until
+        if since is not None:
+            self.win = self.win[self.win.year0 >= since]
+        if until is not None:
+            self.win = self.win[self.win.year0 <= until]
+        if self.win.empty:
+            raise ValueError(f"样本期 [{since}, {until}] 内没有任何窗口")
         with open(ROOT / "data" / "derived" / "tercile_cutoffs.json") as f:
             self.cutoffs = {int(k): v for k, v in json.load(f).items()}
 

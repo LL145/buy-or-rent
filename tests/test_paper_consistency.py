@@ -190,3 +190,20 @@ def test_readme_headline_numbers(docs):
                      f"[{d['ci95'][0] * 100:.0f}, {d['ci95'][1] * 100:.0f}]")
     must_contain(docs, "README.md", f"{u['mean_reversion']['10']['twoway']['t']:.2f}")
     must_contain(docs, "README.md", "16 国")
+
+
+# --------------------------------------------------- 体制稳健性(局限第1条)
+def test_regime_robustness_claims(docs):
+    """局限第1条的论断: 高估组对样本期不敏感, 中/低估值组敏感。"""
+    c = load("cases.json")
+    a, b = c["A_low_yield_metro"], c["B_high_yield_market"]
+    # 画像A(高估组): 全样本与战后样本的胜率差应很小
+    assert abs(a["post1950"]["p_buy_wins"] - a["p_buy_wins"]) <= 0.03
+    # 画像B(中间组): 差应明显更大
+    assert b["post1950"]["p_buy_wins"] - b["p_buy_wins"] > 0.05
+    # 无条件频率整体右移
+    assert a["post1950"]["p_hist_uncond"] > a["p_hist_uncond"] + 0.03
+    for f in ("paper.md", "paper.tex"):
+        must_contain(docs, f, f"{a['p_hist_uncond']:.0%}")
+        must_contain(docs, f, f"{a['post1950']['p_hist_uncond']:.0%}")
+        must_contain(docs, f, f"{b['post1950']['p_buy_wins']:.0%}")

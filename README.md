@@ -22,6 +22,9 @@ python3 analysis/algorithm_figures.py     # 算法输出总览图
 # 估算你自己的情况(示例: 租金收益率1.8%, 本市历史常态2.2%, 按揭4%, 持有10年)
 python3 -m buyrent.cli --rent-yield 0.018 --ry-typical 0.022 \
     --mort-rate 0.040 --down 0.30 --hold 10
+
+# 只用战后窗口(对买方更有利的样本期; 高估值市场的结论基本不变)
+python3 -m buyrent.cli --rent-yield 0.018 --ry-typical 0.022 --hold 10 --since 1950
 ```
 
 ## 主要发现（详见 [论文初稿](paper/paper.md)）

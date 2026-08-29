@@ -29,7 +29,13 @@
       0.0909,
       0.2268
     ],
-    "n_windows_cond": 435
+    "n_windows_cond": 435,
+    "post1950": {
+      "p_hist_uncond": 0.2916,
+      "p_hist_cond": 0.1561,
+      "p_buy_wins": 0.2093,
+      "n_windows_uncond": 854
+    }
   },
   "B_high_yield_market": {
     "label": "B: 高租售比市场",
@@ -61,7 +67,13 @@
       0.44,
       0.6079
     ],
-    "n_windows_cond": 434
+    "n_windows_cond": 434,
+    "post1950": {
+      "p_hist_uncond": 0.5843,
+      "p_hist_cond": 0.6429,
+      "p_buy_wins": 0.6805,
+      "n_windows_uncond": 854
+    }
   },
   "C_short_hold": {
     "label": "C: 短持有期",
@@ -85,6 +97,12 @@
     ],
     "gap_median": -0.047,
     "gap_p5": -0.3012,
-    "gap_p95": 0.2829
+    "gap_p95": 0.2829,
+    "post1950": {
+      "p_hist_uncond": 0.3908,
+      "p_hist_cond": null,
+      "p_buy_wins": 0.476,
+      "n_windows_uncond": 939
+    }
   }
 }

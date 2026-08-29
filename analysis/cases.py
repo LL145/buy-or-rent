@@ -68,6 +68,19 @@ def evaluate(hist, rent_yield, mort_rate, hold, ry_typical=None, label="",
 def main():
     hist = History()
     out = {k: evaluate(hist, **v) for k, v in CASES.items()}
+
+    # 体制稳健性(论文第9节第1条): 只用战后窗口时结论移动多少?
+    # 战后房价涨幅整体更高, 但那些高涨幅多从"便宜"的估值起点出发——
+    # 因此条件化之后, 样本期的选择在多大程度上还重要, 是个可以直接算的问题。
+    post = History(since=1950)
+    for k, v in CASES.items():
+        d = evaluate(post, **v)
+        out[k]["post1950"] = {
+            "p_hist_uncond": d["p_hist_uncond"],
+            "p_hist_cond": d.get("p_hist_cond"),
+            "p_buy_wins": d["p_buy_wins"],
+            "n_windows_uncond": d["n_windows_uncond"],
+        }
     with open(DERIVED / "cases.json", "w") as f:
         json.dump(out, f, indent=2, ensure_ascii=False)
     for k, c in out.items():
@@ -76,6 +89,12 @@ def main():
               f"cond {c.get('p_hist_cond', float('nan')):.0%}  "
               f"P(buy) {c['p_buy_wins']:.0%}{c['p_buy_wins_ci95']}  "
               f"gap {c['gap_median']:+.0%} [{c['gap_p5']:+.0%},{c['gap_p95']:+.0%}]")
+        p = c["post1950"]
+        print(f"{'':20s}   战后样本: 无条件 {p['p_hist_uncond']:.0%} "
+              f"(全样本 {c['p_hist_uncond']:.0%}) | "
+              f"条件 {p['p_hist_cond'] if p['p_hist_cond'] is None else format(p['p_hist_cond'], '.0%')} "
+              f"(全样本 {c.get('p_hist_cond') if c.get('p_hist_cond') is None else format(c['p_hist_cond'], '.0%')}) | "
+              f"胜率 {p['p_buy_wins']:.0%} (全样本 {c['p_buy_wins']:.0%})")
     print("\nderived ->", DERIVED / "cases.json")
 
 

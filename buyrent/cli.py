@@ -36,6 +36,9 @@ def main():
                     help="把蒙特卡洛的窗口通胀固定为该值(如 0.005); "
                          "浮动利率按揭市场(如中国LPR)应设置, 以关闭固定利率"
                          "按揭独有的通胀对冲通道")
+    ap.add_argument("--since", type=int, default=None,
+                    help="只用起始年 ≥ 该年份的历史窗口(如 1950)。默认全样本; "
+                         "战后样本对买方更有利, 见论文第9节")
     ap.add_argument("--n-boot", type=int, default=2000,
                     help="整群自助重复次数(算置信区间用; 0=不算)")
     a = ap.parse_args()
@@ -44,7 +47,7 @@ def main():
                  mort_years=a.mort_years, hold=a.hold, buy_cost=a.buy_cost,
                  sell_cost=a.sell_cost, carry=a.carry, infl=a.infl,
                  g_rent=a.infl, r_invest=0.06)
-    hist = History()
+    hist = History(since=a.since)
     k = snap_horizon(a.hold)
 
     tercile = None
@@ -72,7 +75,8 @@ def main():
     print(f"    买房打平需要房价名义年涨 {g_star:+.2%} "
           f"(真实 {g_star_real:+.2%}), 并持续 {a.hold} 年")
     ci_u = hist.prob_exceed_ci(g_star_real, a.hold, n_boot=a.n_boot or 1)
-    print(f"[2] 历史频率 (JST 16国 1870–2020, {k}年窗口, N={n_uncond})")
+    era = f"{a.since}–2020" if a.since else "1870–2020"
+    print(f"[2] 历史频率 (JST 16国 {era}, {k}年窗口, N={n_uncond})")
     print(f"    真实年涨 ≥ {g_star_real:+.2%} 的窗口占比: {p_uncond:.0%}  "
           f"[{ci_u[0]:.0%}, {ci_u[1]:.0%}]")
     if tercile is not None:

@@ -131,3 +131,16 @@ def test_tercile_conditioning_is_weak_but_signed():
     assert c["point"] > 0                    # 方向: 买贵了后面更容易跌
     assert c["ci95"][0] < 0 < c["ci95"][1]   # 但强度: 区间跨0
     assert 0.01 < c["p_le_0"] < 0.10         # 单边 p 在 1%–10% 之间
+
+
+def test_sample_period_switch():
+    """论文局限第1条承诺可切换样本期——必须真的能切。"""
+    full, post = History(), History(since=1950)
+    assert len(post.win) < len(full.win)
+    assert post.win.year0.min() >= 1950
+    # 三分位切点不随样本期变化: "相对自己历史贵不贵"是固定标准
+    assert post.cutoffs == full.cutoffs
+    # 战后窗口的房价涨幅整体更高
+    assert post.prob_exceed(0.02, 10)[0] > full.prob_exceed(0.02, 10)[0]
+    with pytest.raises(ValueError):
+        History(since=2100)
