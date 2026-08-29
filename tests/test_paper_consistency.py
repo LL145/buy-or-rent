@@ -207,3 +207,18 @@ def test_regime_robustness_claims(docs):
         must_contain(docs, f, f"{a['p_hist_uncond']:.0%}")
         must_contain(docs, f, f"{a['post1950']['p_hist_uncond']:.0%}")
         must_contain(docs, f, f"{b['post1950']['p_buy_wins']:.0%}")
+
+
+# ------------------------------------------- 特异性风险敏感性(局限第5条)
+def test_idio_sensitivity_table(docs):
+    c = load("cases.json")
+    a = c["A_low_yield_metro"]["idio_sensitivity"]
+    b = c["B_high_yield_market"]["idio_sensitivity"]
+    # 论文的论断: A 的胜率随离散度上升, 中位数不动
+    assert a["0.15"]["p_buy_wins"] > a["0.00"]["p_buy_wins"] + 0.05
+    assert abs(a["0.15"]["gap_median"] - a["0.00"]["gap_median"]) < 0.02
+    assert a["0.15"]["gap_p5"] < a["0.00"]["gap_p5"]
+    for f in ("paper.md", "paper.tex"):
+        for sd in ("0.00", "0.05", "0.10", "0.15"):
+            must_contain(docs, f, f"{a[sd]['p_buy_wins']:.0%}", f"画像A idio={sd}")
+            must_contain(docs, f, f"{b[sd]['gap_p5']:+.0%}", f"画像B p5 idio={sd}")

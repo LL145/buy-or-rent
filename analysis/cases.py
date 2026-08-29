@@ -81,6 +81,22 @@ def main():
             "p_buy_wins": d["p_buy_wins"],
             "n_windows_uncond": d["n_windows_uncond"],
         }
+
+    # 特异性风险敏感性: 买的是一套房, 不是全国指数。
+    # 关键观察在于胜率与中位数的**背离**——见论文第9节。
+    IDIO = [0.0, 0.05, 0.10, 0.15]
+    for k, v in CASES.items():
+        s_ = Scenario(rent_yield=v["rent_yield"], mort_rate=v["mort_rate"],
+                      hold=v["hold"], infl=0.02, g_rent=0.02, r_invest=0.06)
+        tc = (hist.tercile_of(valuation_dev(v["rent_yield"], v["ry_typical"]),
+                              v["hold"]) if v["ry_typical"] else None)
+        out[k]["idio_sensitivity"] = {}
+        for sd in IDIO:
+            mc = run(s_, hist, tercile=tc, idio_sd=sd, n_boot=0)
+            out[k]["idio_sensitivity"][f"{sd:.2f}"] = {
+                "p_buy_wins": round(mc["p_buy_wins"], 4),
+                "gap_median": round(mc["gap_real_pct_of_price"]["median"], 4),
+                "gap_p5": round(mc["gap_real_pct_of_price"]["p5"], 4)}
     with open(DERIVED / "cases.json", "w") as f:
         json.dump(out, f, indent=2, ensure_ascii=False)
     for k, c in out.items():

@@ -144,3 +144,29 @@ def test_sample_period_switch():
     assert post.prob_exceed(0.02, 10)[0] > full.prob_exceed(0.02, 10)[0]
     with pytest.raises(ValueError):
         History(since=2100)
+
+
+def test_idio_offsets_scale_with_horizon():
+    """特异性冲击折到年化涨幅上时按 1/√T 摊薄; 关闭时不改变任何结果。"""
+    from buyrent.montecarlo import idio_offsets
+    assert idio_offsets(0.0, 10).tolist() == [0.0]
+    a, b = idio_offsets(0.10, 5), idio_offsets(0.10, 20)
+    assert a.std() > b.std()                       # 持有越久摊得越薄
+    assert a.mean() == pytest.approx(0, abs=1e-12)  # 均值为零, 不平移中位数
+    assert len(a) == 9
+
+
+def test_idio_risk_raises_win_rate_but_not_median():
+    """特异性风险不利好租房: 它把胜率拉向五五开, 中位数几乎不动、左尾变厚。
+
+    这是论文第9节第5条的实证依据——也是不能只看胜率的理由。
+    """
+    hist = History()
+    s = Scenario(rent_yield=0.018, mort_rate=0.040, hold=10)
+    base = run(s, hist, tercile=2, idio_sd=0.0, n_boot=0)
+    wide = run(s, hist, tercile=2, idio_sd=0.15, n_boot=0)
+    assert base["p_buy_wins"] < 0.5
+    assert wide["p_buy_wins"] > base["p_buy_wins"] + 0.05   # 胜率被拉高
+    assert abs(wide["gap_real_pct_of_price"]["median"]
+               - base["gap_real_pct_of_price"]["median"]) < 0.02  # 中位数几乎不动
+    assert wide["gap_real_pct_of_price"]["p5"] < base["gap_real_pct_of_price"]["p5"]

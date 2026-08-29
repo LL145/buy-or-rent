@@ -19,20 +19,41 @@
 from dataclasses import replace
 
 import numpy as np
+from scipy.stats import norm
 
 from .bootstrap import N_BOOT, country_block_ci
 from .history import History
 from .model import Scenario, simulate
+
+IDIO_NODES = 9      # 特异性冲击的分位节点数(奇数, 含 0)
 
 
 def nominal(real: float, infl: float) -> float:
     return (1 + real) * (1 + infl) - 1
 
 
+def idio_offsets(idio_sd: float, hold: int, nodes: int = IDIO_NODES) -> np.ndarray:
+    """单套住宅相对指数的特异性偏离, 折算到年化涨幅上的一组等权分位节点。
+
+    JST 是全国房价指数, 但人买的是**一套**房。个体住宅的价格 = 指数 × 特异性因子,
+    后者的波动远大于指数本身, 却完全不在窗口数据里。
+
+    设特异性成分为年波动率 idio_sd 的随机游走, 则持有 T 年后累计对数偏离的标准差
+    为 idio_sd·√T, 折成**年化**涨幅的标准差即 idio_sd/√T——持有越久, 特异性
+    风险被摊得越薄, 这与"短持有期更不利于买方"的方向一致但机制不同。
+
+    取等权分位节点而非随机抽样, 是为了让输出保持确定、可复现。
+    """
+    if idio_sd <= 0:
+        return np.zeros(1)
+    z = norm.ppf((np.arange(nodes) + 0.5) / nodes)
+    return z * idio_sd / np.sqrt(hold)
+
+
 def run(s: Scenario, hist: History, tercile: int | None = None,
         eq_share: float = 0.6, r_invest_real: float | None = None,
-        infl_fixed: float | None = None, n_boot: int = N_BOOT,
-        seed: int = 0) -> dict:
+        infl_fixed: float | None = None, idio_sd: float = 0.0,
+        n_boot: int = N_BOOT, seed: int = 0) -> dict:
     """返回 P(买优于租)(含95%区间) 及期末财富差(占房价%, 真实口径)的分布。
 
     eq_share:       租方替代资产中股票占比, 其余为长期国债(同窗口, 保留相关性)。
@@ -45,24 +66,34 @@ def run(s: Scenario, hist: History, tercile: int | None = None,
                     历史通胀会凭空授予买方一份固定利率式的通胀对冲, 浮动利率下
                     应关闭该通道——用"固定低通胀 + 固定名义利率"近似
                     "任意通胀 + 恒定真实利率"。
+    idio_sd:        单套住宅相对指数的特异性年波动率(默认 0 = 关闭)。
+                    本文不估计它——JST 只有全国指数, 估不出来; 使用者应以本地
+                    重复销售(repeat-sales)证据自行设定。开启后每个历史窗口被
+                    展开成 IDIO_NODES 个等权分位情形。
     n_boot:         整群自助重复次数(0 = 不算区间)。
     """
     w = hist.pool(s.hold, tercile)
-    gaps = np.empty(len(w))
-    wins = np.empty(len(w), dtype=bool)
-    for i, row in enumerate(w.itertuples(index=False)):
+    offsets = idio_offsets(idio_sd, s.hold)
+    n = len(w) * len(offsets)
+    gaps = np.empty(n)
+    wins = np.empty(n, dtype=bool)
+    iso = np.repeat(w.iso.values, len(offsets))
+    j = 0
+    for row in w.itertuples(index=False):
         infl = infl_fixed if infl_fixed is not None else row.infl
         r_mix = (r_invest_real if r_invest_real is not None
                  else eq_share * row.r_eq + (1 - eq_share) * row.r_bond)
-        out = simulate(replace(
-            s,
-            g_house=nominal(row.g_house, infl),
-            g_rent=nominal(row.g_rent, infl),
-            r_invest=nominal(r_mix, infl),
-            infl=infl,
-        ))
-        gaps[i] = out["gap_real"] / s.price
-        wins[i] = out["gap"] > 0
+        for d in offsets:
+            out = simulate(replace(
+                s,
+                g_house=nominal(row.g_house + d, infl),
+                g_rent=nominal(row.g_rent, infl),
+                r_invest=nominal(r_mix, infl),
+                infl=infl,
+            ))
+            gaps[j] = out["gap_real"] / s.price
+            wins[j] = out["gap"] > 0
+            j += 1
 
     q = np.percentile(gaps, [5, 25, 50, 75, 95])
     res = {
@@ -71,8 +102,9 @@ def run(s: Scenario, hist: History, tercile: int | None = None,
             "p5": q[0], "p25": q[1], "median": q[2], "p75": q[3], "p95": q[4]},
         "n_windows": int(len(w)),
         "n_countries": int(w.iso.nunique()),
+        "idio_sd": idio_sd,
     }
     if n_boot:
         res["p_buy_wins_ci95"] = country_block_ci(
-            w.iso.values, wins, np.mean, n_boot, seed)
+            iso, wins, np.mean, n_boot, seed)
     return res

@@ -36,6 +36,10 @@ def main():
                     help="把蒙特卡洛的窗口通胀固定为该值(如 0.005); "
                          "浮动利率按揭市场(如中国LPR)应设置, 以关闭固定利率"
                          "按揭独有的通胀对冲通道")
+    ap.add_argument("--idio-sd", type=float, default=0.0,
+                    help="单套住宅相对指数的特异性年波动率(如 0.10)。本文不估计"
+                         "该值, 需你按本地重复销售证据设定; 开启后胜率被拉向"
+                         "五五开而中位数几乎不动——见论文第9节")
     ap.add_argument("--since", type=int, default=None,
                     help="只用起始年 ≥ 该年份的历史窗口(如 1950)。默认全样本; "
                          "战后样本对买方更有利, 见论文第9节")
@@ -60,7 +64,7 @@ def main():
     p_uncond, n_uncond = hist.prob_exceed(g_star_real, a.hold)
     mc = run(s, hist, tercile=tercile, eq_share=a.eq_share,
              r_invest_real=a.r_invest_real, infl_fixed=a.infl_fixed,
-             n_boot=a.n_boot)
+             idio_sd=a.idio_sd, n_boot=a.n_boot)
 
     W = 62
     print("=" * W)
