@@ -41,5 +41,7 @@ jobs:
       - name: 网页计算器与数据同步
         run: |
           cp web/calculator.html /tmp/calculator.before.html
+          cp web/index.html /tmp/index.before.html
           python analysis/build_web.py > /dev/null
           diff -q /tmp/calculator.before.html web/calculator.html
+          diff -q /tmp/index.before.html web/index.html

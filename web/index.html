@@ -1,3 +1,12 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="输入房价、月租和打算住几年，用 1870 年以来 16 国的历史窗口算出买房划算的概率——每个结果都带 95% 置信区间。">
+<meta property="og:type" content="website">
+<meta property="og:title" content="买房还是租房">
+<meta property="og:description" content="输入房价、月租和打算住几年，用 1870 年以来 16 国的历史窗口算出买房划算的概率——每个结果都带 95% 置信区间。">
 <title>买房还是租房</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
 <style>
@@ -143,7 +152,8 @@ tbody tr:last-child td{border-bottom:0}
 .foot strong{color:var(--body)}
 .err{color:var(--buy);font-size:13px;margin-top:10px}
 </style>
-<!--HEAD-END-->
+</head>
+<body>
 <div class="wrap">
   <header class="masthead">
     <div class="kicker">
@@ -572,3 +582,5 @@ $("form").addEventListener("input", () => {
 });
 compute();
 </script>
+</body>
+</html>

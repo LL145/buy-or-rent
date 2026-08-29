@@ -4,6 +4,12 @@
 项目目标里的"给当代的普通人一个参考"最终得靠它兑现。
 
 页面在浏览器里跑完整算法(而非查预制表), 因此任何输入都能算, 且与 CLI 同源。
+产出两份, 同一个模板:
+  web/calculator.html — 片段(无 doctype/head), 供 Artifact 发布, 宿主会包一层
+  web/index.html      — 独立文档, 供 GitHub Pages 与本地直接打开
+片段少了 charset 与 viewport, 直接当网页发会导致中文乱码、移动端布局失效,
+所以两者不能混用。
+
 输入: web/calculator.template.html 中的 __WINDOW_DATA__ 占位符
 用法: python3 analysis/build_web.py
 """
@@ -15,6 +21,8 @@ import pandas as pd
 ROOT = Path(__file__).resolve().parents[1]
 WEB = ROOT / "web"
 COLS = ["g_house", "g_rent", "r_eq", "r_bond", "infl"]
+DESC = ("输入房价、月租和打算住几年，用 1870 年以来 16 国的历史窗口算出"
+        "买房划算的概率——每个结果都带 95% 置信区间。")
 
 
 def payload() -> dict:
@@ -47,16 +55,36 @@ def payload() -> dict:
     return out
 
 
+def standalone(fragment: str) -> str:
+    """把片段包成完整 HTML 文档。
+
+    charset 必不可少: 缺了它, 浏览器靠嗅探决定编码, 整页中文可能变成乱码。
+    viewport 同理, 缺了移动端会按桌面宽度渲染再缩小。
+    """
+    head, body = fragment.split("<!--HEAD-END-->", 1)
+    return (
+        '<!doctype html>\n<html lang="zh-CN">\n<head>\n'
+        '<meta charset="utf-8">\n'
+        '<meta name="viewport" content="width=device-width,initial-scale=1">\n'
+        f'<meta name="description" content="{DESC}">\n'
+        '<meta property="og:type" content="website">\n'
+        '<meta property="og:title" content="买房还是租房">\n'
+        f'<meta property="og:description" content="{DESC}">\n'
+        f'{head.strip()}\n</head>\n<body>\n{body.strip()}\n</body>\n</html>\n')
+
+
 def main():
     data = json.dumps(payload(), separators=(",", ":"))
     tpl = (WEB / "calculator.template.html").read_text(encoding="utf-8")
     assert "__WINDOW_DATA__" in tpl, "模板缺少 __WINDOW_DATA__ 占位符"
-    (WEB / "calculator.html").write_text(
-        tpl.replace("__WINDOW_DATA__", data), encoding="utf-8")
-    kb = len(data) / 1024
-    print(f"嵌入 {sum(len(v['iso']) for v in json.loads(data)['horizons'].values())} "
-          f"个历史窗口 ({kb:.0f} KB)")
-    print("->", WEB / "calculator.html")
+    assert "<!--HEAD-END-->" in tpl, "模板缺少 <!--HEAD-END--> 分界标记"
+    fragment = tpl.replace("__WINDOW_DATA__", data)
+    (WEB / "calculator.html").write_text(fragment, encoding="utf-8")
+    (WEB / "index.html").write_text(standalone(fragment), encoding="utf-8")
+    n = sum(len(v["iso"]) for v in json.loads(data)["horizons"].values())
+    print(f"嵌入 {n} 个历史窗口 ({len(data) / 1024:.0f} KB)")
+    print("->", WEB / "calculator.html", "(片段, 供 Artifact)")
+    print("->", WEB / "index.html", "(独立文档, 供 GitHub Pages)")
 
 
 if __name__ == "__main__":

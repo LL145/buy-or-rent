@@ -17,6 +17,7 @@ from buyrent.montecarlo import nominal
 ROOT = Path(__file__).resolve().parents[1]
 HARNESS = ROOT / "tests" / "verify_web.mjs"
 PAGE = ROOT / "web" / "calculator.html"
+STANDALONE = ROOT / "web" / "index.html"
 
 SCENARIOS = [
     # 一线画像(高估组), 中国式参数
@@ -99,3 +100,30 @@ def test_page_is_built_from_current_data():
         subset=["g_house"])
     embedded = sum(len(v["iso"]) for v in data["horizons"].values())
     assert embedded == len(win), "web/calculator.html 已过期, 请重跑 analysis/build_web.py"
+
+
+def test_standalone_document_is_publishable():
+    """web/index.html 要能作为独立网页发布(GitHub Pages), 片段版不能。
+
+    缺 charset 的页面靠浏览器嗅探编码, 整页中文可能变乱码;
+    缺 viewport 的页面在手机上按桌面宽度渲染再整体缩小。
+    """
+    html = STANDALONE.read_text(encoding="utf-8")
+    assert html.startswith("<!doctype html>")
+    head = html[:html.index("</head>")]
+    assert '<meta charset="utf-8">' in head
+    assert 'name="viewport"' in head and "width=device-width" in head
+    assert "<title>" in head and 'lang="zh-CN"' in html
+    # 片段版反过来不能带这些标签——Artifact 发布时会自己包一层
+    frag = PAGE.read_text(encoding="utf-8")
+    for tag in ("<!doctype", "<html", "<head>", "<body>"):
+        assert tag not in frag.lower(), f"片段版不应包含 {tag}"
+
+
+def test_both_outputs_share_one_source():
+    """两份产物必须来自同一模板: 内容体与嵌入数据完全一致。"""
+    frag = PAGE.read_text(encoding="utf-8")
+    body = STANDALONE.read_text(encoding="utf-8")
+    marker = '<script id="windowData" type="application/json">'
+    assert frag[frag.index(marker):] == body[body.index(marker):].replace(
+        "\n</body>\n</html>\n", "\n")

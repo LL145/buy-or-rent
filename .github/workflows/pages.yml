@@ -1,0 +1,52 @@
+# 把计算器发布到 GitHub Pages。
+# 页面由源码在 CI 里重新构建, 而不是直接搬运仓库里的文件——这样线上页面
+# 不可能比 data/derived/windows.csv 陈旧。
+name: Deploy calculator
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'web/calculator.template.html'
+      - 'analysis/build_web.py'
+      - 'data/derived/windows.csv'
+      - 'data/derived/tercile_cutoffs.json'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 同一时间只跑一个部署; 不打断进行中的那个
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - run: pip install -r requirements.txt
+
+      - name: 构建页面
+        run: |
+          python analysis/build_web.py
+          mkdir -p _site
+          cp web/index.html _site/index.html
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4
