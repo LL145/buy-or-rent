@@ -18,8 +18,9 @@
    ③ 真实按揭利率（使用者成本最大项，可锁定）
    ④ 本地收入增速（租金涨速的锚）
    ⑤ 持有期（个人变量，作用完全确定；不足 5 年不要买）
-3. **给普通人参考**：输出要可携带、可自查——经验法则、速查表、CLI 一行命令，
-   而不是只有学术论文。面向的是要做决策的个人，不是审稿人。
+3. **给普通人参考**：输出要可携带、可自查——经验法则、速查表、以及**网页计算器**
+   （唯一面向使用者的入口，见 `web/`），而不是只有学术论文。面向的是要做决策的
+   个人，不是审稿人。
 
 ## 方法论主线（不要偏离）
 
@@ -44,7 +45,8 @@
 | `paper/paper.md` | 论文初稿（真源）；`paper.tex`/`paper.pdf` 由其派生，`paper/build.sh` 编译 |
 | `docs/research-framework.md` | 研究框架：变量三分法、文献、算法设计 |
 | `analysis/` | 实证脚本：`stylized_facts.py`（六个典型事实）、`algorithm_figures.py`、`china_2026.py`、`lookup_table.py` |
-| `buyrent/` | 算法包：`model.py` `breakeven.py` `history.py` `montecarlo.py` `cli.py` |
+| `buyrent/` | 算法包：`model.py` `breakeven.py` `history.py` `montecarlo.py` `bootstrap.py`。<br>无命令行入口——面向使用者的是网页，本包是论文与网页数据背后的引擎 |
+| `web/` | 网页计算器：`calculator.template.html` 是真源，`index.html`（Pages）与 `calculator.html`（Artifact）由 `analysis/build_web.py` 生成 |
 | `data/derived/` | 入库的派生统计量（原始 JST 数据不入库，用 `data/download.sh` 下载） |
 | `figures/` | fig1–fig7 |
 | `tests/` | `python3 -m pytest` |

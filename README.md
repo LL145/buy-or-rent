@@ -22,13 +22,18 @@ python3 analysis/uncertainty.py           # 聚类标准误与整群自助置信
 python3 analysis/cases.py                 # 论文第7节的三个画像
 python3 analysis/algorithm_figures.py     # 算法输出总览图
 python3 analysis/build_web.py             # 生成单文件网页计算器
+```
 
-# 估算你自己的情况(示例: 租金收益率1.8%, 本市历史常态2.2%, 按揭4%, 持有10年)
-python3 -m buyrent.cli --rent-yield 0.018 --ry-typical 0.022 \
-    --mort-rate 0.040 --down 0.30 --hold 10
+要估算你自己的情况，用上面的网页即可，不需要装任何东西。
+`buyrent/` 包是论文数字与网页数据背后的引擎，也可以直接调用：
 
-# 只用战后窗口(对买方更有利的样本期; 高估值市场的结论基本不变)
-python3 -m buyrent.cli --rent-yield 0.018 --ry-typical 0.022 --hold 10 --since 1950
+```python
+from buyrent import History, Scenario, breakeven_growth_real, run
+
+s = Scenario(rent_yield=0.018, mort_rate=0.040, down=0.30, hold=10)
+hist = History()                  # History(since=1950) 可限定为战后窗口
+print(breakeven_growth_real(s))   # 打平需要的真实年涨幅
+print(run(s, hist, tercile=2))    # 胜率(含95%区间)与财富差分布
 ```
 
 ## 主要发现（详见 [论文初稿](paper/paper.md)）
@@ -62,7 +67,7 @@ python3 -m buyrent.cli --rent-yield 0.018 --ry-typical 0.022 --hold 10 --since 1
 | `paper/paper.md` | 论文初稿（含全部实证数字与图表） |
 | `docs/research-framework.md` | 研究框架：变量三分法、文献、算法设计 |
 | `analysis/` | 实证脚本（典型事实、统计推断、案例、图表与派生数据） |
-| `buyrent/` | 算法包：确定性模型、盈亏平衡、历史查询、全量求值、整群自助、CLI |
+| `buyrent/` | 算法包：确定性模型、盈亏平衡、历史查询、全量求值、整群自助 |
 | `figures/` | 论文图表（fig1–fig7） |
 | `data/` | 数据说明与下载脚本；`data/derived/` 为入库的派生统计量 |
 | `web/` | 单文件网页计算器：`index.html`（独立文档，GitHub Pages 与本地直接打开）与 `calculator.html`（片段版）。模型的 JS 实现，输入总价与月租即可，无需装 Python |
