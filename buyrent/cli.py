@@ -36,7 +36,8 @@ def main():
                     help="把蒙特卡洛的窗口通胀固定为该值(如 0.005); "
                          "浮动利率按揭市场(如中国LPR)应设置, 以关闭固定利率"
                          "按揭独有的通胀对冲通道")
-    ap.add_argument("--sims", type=int, default=5000)
+    ap.add_argument("--n-boot", type=int, default=2000,
+                    help="整群自助重复次数(算置信区间用; 0=不算)")
     a = ap.parse_args()
 
     s = Scenario(rent_yield=a.rent_yield, down=a.down, mort_rate=a.mort_rate,
@@ -54,8 +55,9 @@ def main():
     g_star = breakeven_growth(s)
     g_star_real = breakeven_growth_real(s)
     p_uncond, n_uncond = hist.prob_exceed(g_star_real, a.hold)
-    mc = run(s, hist, n=a.sims, tercile=tercile, eq_share=a.eq_share,
-             r_invest_real=a.r_invest_real, infl_fixed=a.infl_fixed)
+    mc = run(s, hist, tercile=tercile, eq_share=a.eq_share,
+             r_invest_real=a.r_invest_real, infl_fixed=a.infl_fixed,
+             n_boot=a.n_boot)
 
     W = 62
     print("=" * W)
@@ -69,19 +71,30 @@ def main():
     print(f"[1] 盈亏平衡涨幅 g*")
     print(f"    买房打平需要房价名义年涨 {g_star:+.2%} "
           f"(真实 {g_star_real:+.2%}), 并持续 {a.hold} 年")
-    print(f"[2] 历史频率 (JST 18国 1870–2020, {k}年窗口, N={n_uncond})")
-    print(f"    真实年涨 ≥ {g_star_real:+.2%} 的窗口占比: {p_uncond:.0%}")
+    ci_u = hist.prob_exceed_ci(g_star_real, a.hold, n_boot=a.n_boot or 1)
+    print(f"[2] 历史频率 (JST 16国 1870–2020, {k}年窗口, N={n_uncond})")
+    print(f"    真实年涨 ≥ {g_star_real:+.2%} 的窗口占比: {p_uncond:.0%}  "
+          f"[{ci_u[0]:.0%}, {ci_u[1]:.0%}]")
     if tercile is not None:
         p_c, n_c = hist.prob_exceed(g_star_real, a.hold, tercile)
+        ci_c = hist.prob_exceed_ci(g_star_real, a.hold, tercile,
+                                   n_boot=a.n_boot or 1)
         print(f"    当前估值分组: {TERCILE_NAMES[tercile]} "
-              f"(偏离 {dev:+.2f}) → 条件频率: {p_c:.0%} (N={n_c})")
-    print(f"[3] 蒙特卡洛 (历史窗口自助法, {mc['n']} 次, "
-          f"抽样池 {mc['n_windows']} 个窗口)")
-    print(f"    P(买 优于 租) = {mc['p_buy_wins']:.0%}")
+              f"(偏离 {dev:+.2f}) → 条件频率: {p_c:.0%} "
+              f"[{ci_c[0]:.0%}, {ci_c[1]:.0%}] (N={n_c})")
+    print(f"[3] 历史窗口全量求值 ({mc['n_windows']} 个窗口, "
+          f"{mc['n_countries']} 国)")
+    line = f"    P(买 优于 租) = {mc['p_buy_wins']:.0%}"
+    if "p_buy_wins_ci95" in mc:
+        lo, hi = mc["p_buy_wins_ci95"]
+        line += f"  95%区间 [{lo:.0%}, {hi:.0%}]"
+    print(line)
     q = mc["gap_real_pct_of_price"]
     print(f"    期末财富差(买−租, 占房价, 真实): 中位 {q['median']:+.0%}, "
           f"90%区间 [{q['p5']:+.0%}, {q['p95']:+.0%}]")
     print("-" * W)
+    print("    方括号为95%区间(以国家为整群自助, 16个国家)——区间宽度说明"
+          "这个胜率\n    只能读到十位数, 不要当作精确到个位的数字。")
     if a.hold < 5:
         print("提示: 持有期不足5年时, 交易成本摊薄几乎注定租房更优。")
     base = simulate(s)

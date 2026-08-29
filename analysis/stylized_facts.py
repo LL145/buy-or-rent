@@ -129,7 +129,11 @@ for k in HORIZONS:
 win.to_csv(DERIVED / "windows.csv", index=False)
 json.dump(cutoffs, open(DERIVED / "tercile_cutoffs.json", "w"))
 
-KS = {"n_countries": int(df.iso.nunique()), "years": [1870, 2020]}
+# n_countries 是数据库的国家数; 但窗口类结论(事实3/4/6 与全部算法输出)只建立在
+# 有租金收益率序列、因而能构造估值偏离与窗口的国家上——少于前者, 引用时须区分。
+KS = {"n_countries": int(df.iso.nunique()), "years": [1870, 2020],
+      "n_countries_windows": int(win.iso.nunique()),
+      "countries_windows": sorted(win.iso.unique().tolist())}
 
 # ============================ 事实1: 长期真实房价 ============================
 fig, ax = plt.subplots(figsize=(8, 4.6))
@@ -144,7 +148,8 @@ for iso, sub in df.groupby("iso"):
 panel = pd.DataFrame(med)
 median = panel.median(axis=1, skipna=True)
 ax.plot(median.index, median.values, color=BLUE, lw=2.2)
-ax.text(2011, median.loc[2020] * 1.1, "18国中位数", color=BLUE, fontsize=10, ha="right")
+ax.text(2011, median.loc[2020] * 1.1, f"{panel.shape[1]}国中位数",
+        color=BLUE, fontsize=10, ha="right")
 ax.set_yscale("log")
 ax.set_yticks([50, 100, 200, 400, 800, 1600, 3200])
 ax.set_ylim(top=3600)
@@ -155,19 +160,25 @@ style(ax)
 
 
 def era_growth(y0, y1):
+    """该时段的跨国中位年化涨幅, 及进入中位数的国家数(各时段可得国家数不同)。"""
     r = []
     for iso in panel.columns:
         s = panel[iso].dropna()
         s = s[(s.index >= y0) & (s.index <= y1)]
         if len(s) >= 30:
             r.append((s.iloc[-1] / s.iloc[0]) ** (1 / (s.index[-1] - s.index[0])) - 1)
-    return float(np.median(r))
+    return float(np.median(r)), len(r)
 
 
-g_pre, g_post = era_growth(1870, 1950), era_growth(1950, 2020)
+(g_pre, n_pre), (g_post, n_post) = era_growth(1870, 1950), era_growth(1950, 2020)
+g_full, n_full = era_growth(1870, 2020)
 KS["real_hp_growth_pre1950"] = ann(g_pre)
 KS["real_hp_growth_post1950"] = ann(g_post)
-KS["real_hp_growth_full"] = ann(era_growth(1870, 2020))
+KS["real_hp_growth_full"] = ann(g_full)
+# 事实1 的三个中位数各自建立在多少国上——与数据库的18国、窗口的16国都不同
+KS["n_countries_hp_panel"] = int(panel.shape[1])
+KS["n_countries_by_era"] = {"pre1950": int(n_pre), "post1950": int(n_post),
+                            "full": int(n_full)}
 ax.text(1905, 210, f"1870–1950\n中位 {g_pre * 100:+.1f}%/年", color=SEC, ha="center")
 ax.text(1988, 60, f"1950–2020\n中位 {g_post * 100:+.1f}%/年", color=SEC, ha="center")
 ax.set_title("真实房价指数(1950=100, 对数轴): 长期上涨集中在1950年之后", color=INK, fontsize=12)

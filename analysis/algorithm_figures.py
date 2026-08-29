@@ -48,7 +48,7 @@ def scen(ry, hold):
 fig, axes = plt.subplots(1, 2, figsize=(10.5, 4.8))
 ax = axes[0]
 for c, ry, lab in zip(COLS, YIELDS, LABELS):
-    ps = [run(scen(ry, h), hist, n=3000, seed=7)["p_buy_wins"] for h in HOLDS]
+    ps = [run(scen(ry, h), hist, seed=7, n_boot=0)["p_buy_wins"] for h in HOLDS]
     ax.plot(HOLDS, np.array(ps) * 100, color=c, lw=2, marker="o", ms=5,
             markeredgecolor=SURF, label=f"租金收益率 {lab}")
 ax.axhline(50, color=BASE, lw=0.9, ls="--")

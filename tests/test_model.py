@@ -1,9 +1,9 @@
-import math
-
+import numpy as np
 import pytest
 
 from buyrent import (History, Scenario, breakeven_growth, breakeven_growth_real,
                      run, simulate, valuation_dev)
+from buyrent.bootstrap import country_block_ci
 from buyrent.model import annuity_payment, loan_balance, with_growth
 
 
@@ -76,11 +76,58 @@ def test_history_and_montecarlo():
     assert hist.prob_exceed(0.02, 10, 2)[0] < hist.prob_exceed(0.02, 10, 0)[0]
 
     s = Scenario(rent_yield=0.02, mort_rate=0.045, hold=10)
-    mc = run(s, hist, n=400, seed=1)
+    mc = run(s, hist, n_boot=200, seed=1)
     assert 0.0 <= mc["p_buy_wins"] <= 1.0
     assert mc["gap_real_pct_of_price"]["p5"] < mc["gap_real_pct_of_price"]["p95"]
 
     # 租金收益率更高(更便宜)的城市, 买房胜率应更高
     s_cheap = Scenario(rent_yield=0.05, mort_rate=0.045, hold=10)
-    mc_cheap = run(s_cheap, hist, n=400, seed=1)
+    mc_cheap = run(s_cheap, hist, n_boot=200, seed=1)
     assert mc_cheap["p_buy_wins"] > mc["p_buy_wins"]
+
+
+def test_montecarlo_is_exhaustive_not_sampled():
+    """全量求值: 胜率必须可由窗口池精确复算, 且与自助次数无关。"""
+    hist = History()
+    s = Scenario(rent_yield=0.03, hold=10)
+    a = run(s, hist, n_boot=0, seed=1)
+    b = run(s, hist, n_boot=500, seed=7)
+    assert a["p_buy_wins"] == b["p_buy_wins"]        # 无蒙特卡洛噪声
+    assert "p_buy_wins_ci95" not in a                # n_boot=0 时不算区间
+    assert a["n_windows"] == len(hist.pool(10))
+    assert a["p_buy_wins"] * a["n_windows"] == pytest.approx(
+        round(a["p_buy_wins"] * a["n_windows"]))     # 胜率是个分数
+
+
+def test_country_block_ci_wider_than_naive():
+    """整群自助的区间必须明显宽于按窗口 iid 抽样——这正是重叠窗口的代价。"""
+    hist = History()
+    sub = hist.pool(10)
+    g = sub.g_house.values
+    block = country_block_ci(sub.iso.values, g, lambda a: (a >= 0.02).mean(),
+                             n_boot=600, seed=0)
+    # 打散国家标签 = 假装窗口独立
+    rng = np.random.default_rng(0)
+    naive = country_block_ci(rng.permutation(sub.iso.values), g,
+                             lambda a: (a >= 0.02).mean(), n_boot=600, seed=0)
+    assert (block[1] - block[0]) > 1.5 * (naive[1] - naive[0])
+
+
+def test_ci_brackets_point_estimate():
+    hist = History()
+    for terc in (None, 0, 2):
+        p, _ = hist.prob_exceed(0.02, 10, terc)
+        lo, hi = hist.prob_exceed_ci(0.02, 10, terc, n_boot=400)
+        assert lo <= p <= hi
+
+
+def test_tercile_conditioning_is_weak_but_signed():
+    """高估组下跌概率更高, 但差异的95%区间含0——论文必须按这个强度表述。"""
+    import json
+    from pathlib import Path
+    u = json.load(open(Path(__file__).resolve().parents[1]
+                       / "data" / "derived" / "uncertainty.json"))
+    c = u["g10_by_tercile_ci"]["contrast_dear_minus_cheap"]["p_le_0"]
+    assert c["point"] > 0                    # 方向: 买贵了后面更容易跌
+    assert c["ci95"][0] < 0 < c["ci95"][1]   # 但强度: 区间跨0
+    assert 0.01 < c["p_le_0"] < 0.10         # 单边 p 在 1%–10% 之间

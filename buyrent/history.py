@@ -10,6 +10,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from .bootstrap import N_BOOT, country_block_ci
+
 ROOT = Path(__file__).resolve().parents[1]
 HORIZONS = (5, 10, 15, 20)
 TERCILE_NAMES = {0: "低估", 1: "中间", 2: "高估"}
@@ -52,14 +54,29 @@ class History:
         x = self._slice(horizon, tercile).g_house.dropna()
         return float((x >= g_real).mean()), int(len(x))
 
+    def prob_exceed_ci(self, g_real: float, horizon: int,
+                       tercile: int | None = None, n_boot: int = N_BOOT,
+                       seed: int = 0) -> list[float]:
+        """上式频率的 95% 区间(以国家为整群自助)。
+
+        频率本身也是估计量。点估计不带区间, 等于用一个看起来精确的数字
+        掩盖它背后只有 16 个国家的事实。
+        """
+        sub = self._slice(horizon, tercile).dropna(subset=["g_house"])
+        return country_block_ci(sub.iso.values, sub.g_house.values,
+                                lambda a: (a >= g_real).mean(), n_boot, seed)
+
     def quantiles(self, horizon: int, tercile: int | None = None,
                   qs=(5, 25, 50, 75, 95)) -> dict:
         x = self._slice(horizon, tercile).g_house.dropna()
         return {q: float(np.percentile(x, q)) for q in qs}
 
-    def sample_windows(self, horizon: int, n: int, rng: np.random.Generator,
-                       tercile: int | None = None) -> pd.DataFrame:
-        """自助抽样 n 个历史窗口(保留变量间的联合结构)。"""
-        sub = self._slice(horizon, tercile).dropna(
+    def pool(self, horizon: int, tercile: int | None = None) -> pd.DataFrame:
+        """该持有期(可选该估值组)下全部可用的历史窗口。
+
+        蒙特卡洛直接遍历这个池子而非从中有放回抽样: 池子只有数百到一千余个
+        窗口, 全量求值既精确又更快, 抽样只会凭空添一层噪声。不确定性由
+        `montecarlo.run` 以国家为整群的自助法给出(窗口重叠 + 国别内相关)。
+        """
+        return self._slice(horizon, tercile).dropna(
             subset=["g_house", "g_rent", "r_eq", "r_bond", "infl"])
-        return sub.iloc[rng.integers(0, len(sub), n)].reset_index(drop=True)

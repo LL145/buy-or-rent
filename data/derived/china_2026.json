@@ -9,14 +9,26 @@
     "g_star_real": 0.016,
     "p_hist_uncond": 0.429,
     "p_hist_cond": 0.34,
-    "p_buy_conservative": 0.363,
-    "gap_median_conservative": -0.091,
+    "p_hist_cond_ci95": [
+      0.26,
+      0.426
+    ],
+    "p_buy_conservative": 0.361,
+    "p_buy_conservative_ci95": [
+      0.277,
+      0.45
+    ],
+    "gap_median_conservative": -0.095,
     "gap_p5_conservative": -0.432,
-    "gap_p95_conservative": 0.608,
-    "p_buy_balanced": 0.266,
-    "gap_median_balanced": -0.174,
+    "gap_p95_conservative": 0.6,
+    "p_buy_balanced": 0.261,
+    "p_buy_balanced_ci95": [
+      0.181,
+      0.348
+    ],
+    "gap_median_balanced": -0.177,
     "gap_p5_balanced": -0.515,
-    "gap_p95_balanced": 0.524
+    "gap_p95_balanced": 0.516
   },
   {
     "city": "强二线(杭州苏州)",
@@ -28,14 +40,26 @@
     "g_star_real": 0.014,
     "p_hist_uncond": 0.448,
     "p_hist_cond": 0.366,
-    "p_buy_conservative": 0.392,
+    "p_hist_cond_ci95": [
+      0.289,
+      0.45
+    ],
+    "p_buy_conservative": 0.394,
+    "p_buy_conservative_ci95": [
+      0.318,
+      0.481
+    ],
     "gap_median_conservative": -0.069,
     "gap_p5_conservative": -0.411,
-    "gap_p95_conservative": 0.631,
-    "p_buy_balanced": 0.294,
-    "gap_median_balanced": -0.15,
+    "gap_p95_conservative": 0.623,
+    "p_buy_balanced": 0.289,
+    "p_buy_balanced_ci95": [
+      0.21,
+      0.378
+    ],
+    "gap_median_balanced": -0.151,
     "gap_p5_balanced": -0.492,
-    "gap_p95_balanced": 0.549
+    "gap_p95_balanced": 0.541
   },
   {
     "city": "二线(成都武汉等)",
@@ -47,14 +71,26 @@
     "g_star_real": 0.0099,
     "p_hist_uncond": 0.502,
     "p_hist_cond": 0.423,
-    "p_buy_conservative": 0.466,
+    "p_hist_cond_ci95": [
+      0.352,
+      0.5
+    ],
+    "p_buy_conservative": 0.464,
+    "p_buy_conservative_ci95": [
+      0.393,
+      0.542
+    ],
     "gap_median_conservative": -0.024,
     "gap_p5_conservative": -0.368,
-    "gap_p95_conservative": 0.676,
+    "gap_p95_conservative": 0.669,
     "p_buy_balanced": 0.366,
-    "gap_median_balanced": -0.099,
+    "p_buy_balanced_ci95": [
+      0.279,
+      0.458
+    ],
+    "gap_median_balanced": -0.1,
     "gap_p5_balanced": -0.445,
-    "gap_p95_balanced": 0.598
+    "gap_p95_balanced": 0.591
   },
   {
     "city": "三四线(人口流出)",
@@ -66,13 +102,25 @@
     "g_star_real": 0.012,
     "p_hist_uncond": 0.474,
     "p_hist_cond": 0.393,
-    "p_buy_conservative": 0.437,
+    "p_hist_cond_ci95": [
+      0.321,
+      0.47
+    ],
+    "p_buy_conservative": 0.436,
+    "p_buy_conservative_ci95": [
+      0.366,
+      0.513
+    ],
     "gap_median_conservative": -0.048,
     "gap_p5_conservative": -0.39,
-    "gap_p95_conservative": 0.653,
-    "p_buy_balanced": 0.316,
+    "gap_p95_conservative": 0.646,
+    "p_buy_balanced": 0.315,
+    "p_buy_balanced_ci95": [
+      0.233,
+      0.403
+    ],
     "gap_median_balanced": -0.126,
     "gap_p5_balanced": -0.468,
-    "gap_p95_balanced": 0.573
+    "gap_p95_balanced": 0.566
   }
 ]

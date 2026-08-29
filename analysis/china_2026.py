@@ -65,11 +65,15 @@ for name, ry, ry_typ in CITIES:
            "dev": round(dev, 3), "tercile": tc,
            "g_star_nominal": round(g_star_n, 4),
            "g_star_real": round(g_star_r, 4),
-           "p_hist_uncond": round(p_u, 3), "p_hist_cond": round(p_c, 3)}
+           "p_hist_uncond": round(p_u, 3), "p_hist_cond": round(p_c, 3),
+           "p_hist_cond_ci95": [round(v, 3) for v in
+                                hist.prob_exceed_ci(g_star_r, s.hold, tc)]}
     for label, rr in INVESTORS:
-        mc = run(s, hist, n=4000, tercile=tc, r_invest_real=rr, infl_fixed=0.005, seed=11)
+        mc = run(s, hist, tercile=tc, r_invest_real=rr, infl_fixed=0.005, seed=11)
         key = "conservative" if rr == 0.015 else "balanced"
         row[f"p_buy_{key}"] = round(mc["p_buy_wins"], 3)
+        # 分城市结论同样只能读到十位数——区间与点估计一起入库
+        row[f"p_buy_{key}_ci95"] = [round(v, 3) for v in mc["p_buy_wins_ci95"]]
         row[f"gap_median_{key}"] = round(
             mc["gap_real_pct_of_price"]["median"], 3)
         row[f"gap_p5_{key}"] = round(mc["gap_real_pct_of_price"]["p5"], 3)

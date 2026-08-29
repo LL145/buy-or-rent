@@ -1,0 +1,90 @@
+{
+  "A_low_yield_metro": {
+    "label": "A: 低租售比大城市",
+    "rent_yield": 0.018,
+    "mort_rate": 0.04,
+    "hold": 10,
+    "ry_typical": 0.022,
+    "horizon_used": 10,
+    "g_star_nominal": 0.05531,
+    "g_star_real": 0.03462,
+    "p_hist_uncond": 0.2225,
+    "p_hist_uncond_ci95": [
+      0.1866,
+      0.2622
+    ],
+    "n_windows_uncond": 1510,
+    "p_buy_wins": 0.2005,
+    "p_buy_wins_ci95": [
+      0.14,
+      0.2562
+    ],
+    "gap_median": -0.3198,
+    "gap_p5": -1.1341,
+    "gap_p95": 0.3949,
+    "tercile": 2,
+    "dev": 0.2007,
+    "p_hist_cond": 0.154,
+    "p_hist_cond_ci95": [
+      0.0909,
+      0.2268
+    ],
+    "n_windows_cond": 435
+  },
+  "B_high_yield_market": {
+    "label": "B: 高租售比市场",
+    "rent_yield": 0.055,
+    "mort_rate": 0.065,
+    "hold": 10,
+    "ry_typical": 0.055,
+    "horizon_used": 10,
+    "g_star_nominal": 0.02969,
+    "g_star_real": 0.0095,
+    "p_hist_uncond": 0.5086,
+    "p_hist_uncond_ci95": [
+      0.463,
+      0.5574
+    ],
+    "n_windows_uncond": 1510,
+    "p_buy_wins": 0.5995,
+    "p_buy_wins_ci95": [
+      0.5109,
+      0.6764
+    ],
+    "gap_median": 0.0929,
+    "gap_p5": -0.6096,
+    "gap_p95": 0.8795,
+    "tercile": 1,
+    "dev": 0.0,
+    "p_hist_cond": 0.523,
+    "p_hist_cond_ci95": [
+      0.44,
+      0.6079
+    ],
+    "n_windows_cond": 434
+  },
+  "C_short_hold": {
+    "label": "C: 短持有期",
+    "rent_yield": 0.03,
+    "mort_rate": 0.035,
+    "hold": 3,
+    "ry_typical": null,
+    "horizon_used": 5,
+    "g_star_nominal": 0.05233,
+    "g_star_real": 0.03169,
+    "p_hist_uncond": 0.3215,
+    "p_hist_uncond_ci95": [
+      0.2907,
+      0.3532
+    ],
+    "n_windows_uncond": 1630,
+    "p_buy_wins": 0.3805,
+    "p_buy_wins_ci95": [
+      0.343,
+      0.4198
+    ],
+    "gap_median": -0.047,
+    "gap_p5": -0.3012,
+    "gap_p95": 0.2829
+  }
+}

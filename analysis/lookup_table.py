@@ -29,7 +29,7 @@ grid = {}
 for h in HOLDS:
     for ry in YIELDS:
         s = Scenario(rent_yield=ry, hold=h, **COMMON)
-        ps = [run(s, hist, n=3000, r_invest_real=rr, infl_fixed=0.005, seed=3)["p_buy_wins"]
+        ps = [run(s, hist, r_invest_real=rr, infl_fixed=0.005, seed=3, n_boot=0)["p_buy_wins"]
               for rr in INVESTORS]
         lo, hi = min(ps), max(ps)
         verdict = "买" if lo >= 0.55 else ("租" if hi <= 0.45 else "中性")
