@@ -9,6 +9,9 @@
 "这个涨幅在 1870 年以来的所有历史窗口中出现过百分之几"。所有概率均以国家为
 整群（block）自助抽样给出 95% 区间——窗口高度重叠，点估计不配区间就是假装精确。
 
+**在线计算器 → <https://ll145.github.io/buy-or-rent/>**
+（填三个数：房子总价、同小区月租、打算住几年）
+
 ## 快速开始
 
 ```bash
@@ -70,13 +73,16 @@ python3 -m buyrent.cli --rent-yield 0.018 --ry-typical 0.022 --hold 10 --since 1
 
 ## 网页计算器
 
-单文件页面，把 5834 个历史窗口和完整算法都嵌在里面，打开即用，不联网也能算。
+**<https://ll145.github.io/buy-or-rent/>** —— 单文件页面，把 5834 个历史窗口和完整算法都嵌在里面，打开即用，不联网也能算。
 普通人只需填三个数：房子总价、同小区月租、打算住几年。
 
 `analysis/build_web.py` 由同一个模板产出两份：`web/index.html` 是完整文档
 （带 charset 与 viewport，供 GitHub Pages 部署或本地双击打开），
 `web/calculator.html` 是片段版（供 Artifact 发布，宿主会自己包一层）。
 两份的内容体与嵌入数据由测试断言完全一致。
+
+`.github/workflows/pages.yml` 在每次相关改动后由源码**重新构建**再部署，
+而不是搬运仓库里的文件——线上页面因此不可能比 `windows.csv` 陈旧。
 
 页面把模型重新实现了一遍（JavaScript）。两份实现一旦分叉，页面就会安静地
 给出与论文不同的结论——所以 `tests/test_web_calculator.py` 会在 node 里跑页面
