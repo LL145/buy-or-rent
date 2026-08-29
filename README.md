@@ -12,7 +12,7 @@
 ## 快速开始
 
 ```bash
-pip install pandas numpy matplotlib scipy openpyxl
+pip install -r requirements.txt
 bash data/download.sh                     # 下载 JST 宏观历史数据库(不入库)
 python3 analysis/stylized_facts.py        # 复现六个典型事实, 生成图表与派生数据
 python3 analysis/uncertainty.py           # 聚类标准误与整群自助置信区间
@@ -58,6 +58,14 @@ python3 -m buyrent.cli --rent-yield 0.018 --ry-typical 0.022 \
 | `buyrent/` | 算法包：确定性模型、盈亏平衡、历史查询、全量求值、整群自助、CLI |
 | `figures/` | 论文图表（fig1–fig7） |
 | `data/` | 数据说明与下载脚本；`data/derived/` 为入库的派生统计量 |
-| `tests/` | 模型与算法的单元测试（`python3 -m pytest`） |
+| `tests/` | 单元测试 + 论文数字与派生数据的一致性检查（`python3 -m pytest`） |
+| `.github/workflows/` | CI：跑测试，并验证派生数据能由入库的 `windows.csv` 重新生成 |
 
 数据引用要求见 [data/README.md](data/README.md)（JST Macrohistory Database）。
+
+## 改动约定
+
+论文里的每个数字都由 `analysis/` 下的脚本产出并写入 `data/derived/`。
+改了模型或口径，就要重跑相应脚本，并同步更新
+`paper/paper.md`、`paper/paper.tex`、`README.md` 三处引用——
+`tests/test_paper_consistency.py` 会强制这四者一致，对不上就测试失败。

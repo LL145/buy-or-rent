@@ -54,7 +54,14 @@ def ann(x):  # 年化
 
 
 # ================================ 数据准备 ================================
-df = pd.read_excel(ROOT / "data" / "JSTdatasetR6.xlsx", sheet_name="Sheet1")
+RAW = ROOT / "data" / "JSTdatasetR6.xlsx"
+if not RAW.exists():
+    raise SystemExit(
+        f"找不到原始数据 {RAW}\n"
+        "JST 数据库遵循非商用+引用的使用条款, 因此不入库。请先运行:\n"
+        "    bash data/download.sh\n"
+        "引用要求见 data/README.md。")
+df = pd.read_excel(RAW, sheet_name="Sheet1")
 df = df.sort_values(["iso", "year"]).reset_index(drop=True)
 g = df.groupby("iso", group_keys=False)
 

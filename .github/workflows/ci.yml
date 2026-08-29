@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - run: pip install -r requirements.txt
+
+      # 模型、算法, 以及论文数字与 data/derived/ 的一致性
+      - name: pytest
+        run: python -m pytest -q
+
+      # 派生数据必须能由入库的 windows.csv 重新生成。
+      # 这一步防止有人手改 JSON, 或改了代码却忘了重跑脚本。
+      # (stylized_facts.py 需要非入库的 JST 原始数据, 故不在 CI 内运行。)
+      - name: 派生数据可复现
+        run: |
+          cp data/derived/uncertainty.json /tmp/uncertainty.before.json
+          cp data/derived/cases.json /tmp/cases.before.json
+          python analysis/uncertainty.py > /dev/null
+          python analysis/cases.py > /dev/null
+          diff -u /tmp/uncertainty.before.json data/derived/uncertainty.json
+          diff -u /tmp/cases.before.json data/derived/cases.json

@@ -1,0 +1,8 @@
+# 复现全部结果所需。版本为已验证可用的下界, 不钉死上界。
+# openpyxl 仅用于读取 JST 原始 xlsx(analysis/stylized_facts.py)。
+numpy>=1.24
+pandas>=2.0
+scipy>=1.10
+matplotlib>=3.7
+openpyxl>=3.1
+pytest>=7.4
