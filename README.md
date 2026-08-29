@@ -18,6 +18,7 @@ python3 analysis/stylized_facts.py        # 复现六个典型事实, 生成图�
 python3 analysis/uncertainty.py           # 聚类标准误与整群自助置信区间
 python3 analysis/cases.py                 # 论文第7节的三个画像
 python3 analysis/algorithm_figures.py     # 算法输出总览图
+python3 analysis/build_web.py             # 生成单文件网页计算器
 
 # 估算你自己的情况(示例: 租金收益率1.8%, 本市历史常态2.2%, 按揭4%, 持有10年)
 python3 -m buyrent.cli --rent-yield 0.018 --ry-typical 0.022 \
@@ -61,10 +62,21 @@ python3 -m buyrent.cli --rent-yield 0.018 --ry-typical 0.022 --hold 10 --since 1
 | `buyrent/` | 算法包：确定性模型、盈亏平衡、历史查询、全量求值、整群自助、CLI |
 | `figures/` | 论文图表（fig1–fig7） |
 | `data/` | 数据说明与下载脚本；`data/derived/` 为入库的派生统计量 |
+| `web/` | 单文件网页计算器（`calculator.html`）：模型的 JS 实现，输入总价与月租即可，无需装 Python |
 | `tests/` | 单元测试 + 论文数字与派生数据的一致性检查（`python3 -m pytest`） |
 | `.github/workflows/` | CI：跑测试，并验证派生数据能由入库的 `windows.csv` 重新生成 |
 
 数据引用要求见 [data/README.md](data/README.md)（JST Macrohistory Database）。
+
+## 网页计算器
+
+`web/calculator.html` 是单文件页面，把 5834 个历史窗口和完整算法都嵌在里面，
+打开即用，不联网也能算。普通人只需填三个数：房子总价、同小区月租、打算住几年。
+
+页面把模型重新实现了一遍（JavaScript）。两份实现一旦分叉，页面就会安静地
+给出与论文不同的结论——所以 `tests/test_web_calculator.py` 会在 node 里跑页面
+里的算法，与 Python **逐位**对照；数据也不做四舍五入导出，正是为了让这个
+等价性可以断言。
 
 ## 改动约定
 

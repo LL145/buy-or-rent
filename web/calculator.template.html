@@ -1,0 +1,568 @@
+<title>买房还是租房</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --ground:#EDF0F0; --surface:#FAFBFB; --raised:#FFFFFF;
+  --ink:#141D1C; --body:#33403F; --muted:#667877; --faint:#8A9A99;
+  --line:#D6DEDD; --hairline:#E5EBEA;
+  --buy:#A85A2B; --buy-soft:#E8D5C6;
+  --rent:#2C6E6B; --rent-soft:#C9DEDC;
+  --warn:#8A6D1F;
+  --serif:"Songti SC","STSong","Noto Serif CJK SC","Source Han Serif SC",Georgia,serif;
+  --sans:"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC",system-ui,sans-serif;
+  --latin:"Newsreader",Georgia,serif;
+  --mono:"IBM Plex Mono","SF Mono",Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#0D1413; --surface:#151E1D; --raised:#1B2524;
+    --ink:#E8EFEE; --body:#C3CFCE; --muted:#8DA09E; --faint:#6B7E7C;
+    --line:#2A3736; --hairline:#212D2C;
+    --buy:#DE8A4F; --buy-soft:#4A3122;
+    --rent:#6FBDB8; --rent-soft:#1E3D3B;
+    --warn:#C9A94E;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0D1413; --surface:#151E1D; --raised:#1B2524;
+  --ink:#E8EFEE; --body:#C3CFCE; --muted:#8DA09E; --faint:#6B7E7C;
+  --line:#2A3736; --hairline:#212D2C;
+  --buy:#DE8A4F; --buy-soft:#4A3122;
+  --rent:#6FBDB8; --rent-soft:#1E3D3B;
+  --warn:#C9A94E;
+}
+*{box-sizing:border-box}
+body{background:var(--ground);color:var(--body);font-family:var(--sans);
+  line-height:1.7;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;padding:clamp(20px,4vw,52px) clamp(16px,4vw,36px) 72px}
+
+/* ---------- masthead ---------- */
+.masthead{border-bottom:1.5px solid var(--ink);padding-bottom:18px;margin-bottom:8px}
+.kicker{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--muted);display:flex;flex-wrap:wrap;gap:6px 18px;margin-bottom:14px}
+h1{font-family:var(--serif);font-weight:400;color:var(--ink);
+  font-size:clamp(30px,5.2vw,50px);line-height:1.15;margin:0;text-wrap:balance;
+  letter-spacing:.01em}
+h1 em{font-family:var(--latin);font-style:italic;font-size:.82em;color:var(--muted)}
+.standfirst{margin:16px 0 0;max-width:63ch;font-size:15px;color:var(--body)}
+.standfirst b{color:var(--ink);font-weight:600}
+
+/* ---------- layout ---------- */
+.cols{display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr);
+  gap:clamp(22px,3.4vw,48px);align-items:start;margin-top:34px}
+/* 网格子项默认 min-width:auto, 会被表格的 min-width 撑破;
+   置 0 后 .tblwrap 的 overflow-x 才真正接管, 页面不再横向滚动。 */
+.cols>*{min-width:0}
+@media(max-width:860px){.cols{grid-template-columns:1fr;gap:30px}}
+
+/* ---------- form ---------- */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:3px;
+  padding:20px 20px 22px}
+@media(min-width:861px){.panel{position:sticky;top:20px}}
+.panel h2,.card h2{font-family:var(--mono);font-size:11px;letter-spacing:.15em;
+  text-transform:uppercase;color:var(--muted);margin:0 0 16px;font-weight:600}
+.field{margin-bottom:15px}
+.field label{display:block;font-size:13px;color:var(--body);margin-bottom:5px}
+.field .hint{display:block;font-size:11.5px;color:var(--faint);line-height:1.5;margin-top:4px}
+.inputrow{display:flex;align-items:stretch;border:1px solid var(--line);border-radius:2px;
+  background:var(--raised);transition:border-color .15s}
+.inputrow:focus-within{border-color:var(--rent);box-shadow:0 0 0 2px var(--rent-soft)}
+.inputrow input{flex:1;min-width:0;border:0;background:none;padding:8px 10px;
+  font-family:var(--mono);font-size:14px;color:var(--ink);font-variant-numeric:tabular-nums}
+.inputrow input:focus{outline:none}
+.unit{display:flex;align-items:center;padding:0 10px;font-size:12px;color:var(--faint);
+  border-left:1px solid var(--hairline);white-space:nowrap}
+details.adv{margin-top:6px;border-top:1px solid var(--hairline);padding-top:14px}
+details.adv summary{font-family:var(--mono);font-size:11px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--muted);cursor:pointer;list-style:none;
+  display:flex;align-items:center;gap:7px}
+details.adv summary::-webkit-details-marker{display:none}
+details.adv summary::before{content:"+";font-size:14px;line-height:1}
+details.adv[open] summary::before{content:"−"}
+details.adv summary:focus-visible{outline:2px solid var(--rent);outline-offset:3px}
+.advbody{padding-top:14px}
+.derived{margin-top:16px;padding-top:14px;border-top:1px solid var(--hairline);
+  font-size:12.5px;color:var(--muted);display:flex;justify-content:space-between;gap:10px}
+.derived b{font-family:var(--mono);color:var(--ink);font-weight:500;
+  font-variant-numeric:tabular-nums}
+
+/* ---------- verdict ---------- */
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--edge);
+  border-radius:3px;padding:22px 24px;margin-bottom:18px}
+.verdict .vtag{font-family:var(--serif);font-size:clamp(24px,3.4vw,32px);color:var(--edge);
+  line-height:1.2;margin:0 0 8px;font-weight:400}
+.verdict p{margin:0;font-size:14.5px;color:var(--body);max-width:62ch}
+
+/* ---------- cards ---------- */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:3px;
+  padding:20px 24px 24px;margin-bottom:18px}
+.readout{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:4px}
+.big{font-family:var(--mono);font-size:clamp(32px,5vw,44px);font-weight:500;color:var(--ink);
+  line-height:1;font-variant-numeric:tabular-nums}
+.range{font-family:var(--mono);font-size:15px;color:var(--muted);font-variant-numeric:tabular-nums}
+.note{font-size:13px;color:var(--muted);margin:12px 0 0;max-width:64ch}
+.note b{color:var(--body)}
+
+/* ---------- interval band ---------- */
+.band{margin:22px 0 6px}
+.track{position:relative;height:44px}
+.rail{position:absolute;top:19px;left:0;right:0;height:6px;background:var(--hairline);
+  border-radius:3px}
+.fill{position:absolute;top:19px;height:6px;border-radius:3px;background:var(--edge);
+  opacity:.34;transition:left .3s cubic-bezier(.4,0,.2,1),width .3s cubic-bezier(.4,0,.2,1)}
+.tick{position:absolute;top:11px;width:3px;height:22px;background:var(--edge);
+  border-radius:1px;transition:left .3s cubic-bezier(.4,0,.2,1)}
+.mid{position:absolute;top:8px;width:1px;height:28px;background:var(--faint);opacity:.55}
+.midlab{position:absolute;top:36px;font-family:var(--mono);font-size:10px;color:var(--faint);
+  transform:translateX(-50%);white-space:nowrap}
+.scale{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10.5px;
+  color:var(--faint);margin-top:16px;border-top:1px solid var(--hairline);padding-top:6px}
+@media(prefers-reduced-motion:reduce){.fill,.tick{transition:none}}
+
+/* ---------- table ---------- */
+.tblwrap{overflow-x:auto;margin-top:18px}
+table{border-collapse:collapse;width:100%;font-size:13px;min-width:380px}
+th,td{text-align:right;padding:7px 10px;border-bottom:1px solid var(--hairline)}
+th:first-child,td:first-child{text-align:left;color:var(--body)}
+thead th{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--muted);font-weight:600;border-bottom:1px solid var(--line)}
+td{font-family:var(--mono);color:var(--ink);font-variant-numeric:tabular-nums}
+tbody tr:last-child td{border-bottom:0}
+
+/* ---------- footer ---------- */
+.foot{margin-top:34px;padding-top:20px;border-top:1px solid var(--line);
+  font-size:12.5px;color:var(--muted);max-width:74ch}
+.foot p{margin:0 0 10px}
+.foot a{color:var(--rent);text-decoration:underline;text-underline-offset:2px}
+.foot strong{color:var(--body)}
+.err{color:var(--buy);font-size:13px;margin-top:10px}
+</style>
+
+<div class="wrap">
+  <header class="masthead">
+    <div class="kicker">
+      <span id="kickerSrc">JST 宏观历史数据库 · 1870–2020</span>
+      <span id="kickerN"></span>
+    </div>
+    <h1>买房还是租房 <em>a probability, not a prediction</em></h1>
+    <p class="standfirst">
+      这道题唯一诚实的答案是一段区间。下面每个结果都画成一条<b>带子</b>——
+      带子是 95% 置信区间，中间那道刻度才是点估计。
+      带子有多宽，你就只能读到第几位数。
+    </p>
+  </header>
+
+  <div class="cols">
+    <form class="panel" id="form" autocomplete="off">
+      <h2>你的情况</h2>
+
+      <div class="field">
+        <label for="price">房子总价</label>
+        <div class="inputrow"><input id="price" type="number" min="1" step="1" value="300"><span class="unit">万元</span></div>
+      </div>
+
+      <div class="field">
+        <label for="rent">同小区同户型的月租金</label>
+        <div class="inputrow"><input id="rent" type="number" min="1" step="100" value="4500"><span class="unit">元/月</span></div>
+        <span class="hint">查中介网站上同小区在租的房子，不要用你自己估的。</span>
+      </div>
+
+      <div class="field">
+        <label for="hold">打算住几年</label>
+        <div class="inputrow"><input id="hold" type="number" min="1" max="30" step="1" value="10"><span class="unit">年</span></div>
+        <span class="hint">不确定就填你能确定不搬的年数，往少了填。</span>
+      </div>
+
+      <div class="field">
+        <label for="mort">按揭利率</label>
+        <div class="inputrow"><input id="mort" type="number" min="0" max="20" step="0.05" value="3.1"><span class="unit">% / 年</span></div>
+      </div>
+
+      <div class="field">
+        <label for="down">首付比例</label>
+        <div class="inputrow"><input id="down" type="number" min="0" max="100" step="5" value="30"><span class="unit">%</span></div>
+      </div>
+
+      <details class="adv">
+        <summary>更多参数</summary>
+        <div class="advbody">
+          <div class="field">
+            <label for="rinv">你租房时，钱能拿到的真实收益率</label>
+            <div class="inputrow"><input id="rinv" type="number" min="-5" max="15" step="0.5" value="1.5"><span class="unit">% / 年</span></div>
+            <span class="hint">扣掉通胀后。存款理财约 1–2%，能配全球股债约 3%。</span>
+          </div>
+          <div class="field">
+            <label for="rytyp">本市过去约 20 年的常态租金收益率</label>
+            <div class="inputrow"><input id="rytyp" type="number" min="0" max="15" step="0.1" value="2.6"><span class="unit">%</span></div>
+            <span class="hint">留空则不做估值分组。填了会按"现在比自己历史贵/便宜"筛选历史窗口。</span>
+          </div>
+          <div class="field">
+            <label for="buycost">买入成本</label>
+            <div class="inputrow"><input id="buycost" type="number" min="0" max="20" step="0.5" value="2.5"><span class="unit">% 房价</span></div>
+          </div>
+          <div class="field">
+            <label for="sellcost">卖出成本</label>
+            <div class="inputrow"><input id="sellcost" type="number" min="0" max="20" step="0.5" value="1.5"><span class="unit">% 房价</span></div>
+          </div>
+          <div class="field">
+            <label for="carry">每年持有成本</label>
+            <div class="inputrow"><input id="carry" type="number" min="0" max="10" step="0.1" value="0.7"><span class="unit">% 房价</span></div>
+            <span class="hint">物业费、维修、折旧。中国暂无持有环节房产税。</span>
+          </div>
+          <div class="field">
+            <label for="mortyears">按揭年限</label>
+            <div class="inputrow"><input id="mortyears" type="number" min="1" max="40" step="1" value="30"><span class="unit">年</span></div>
+          </div>
+        </div>
+      </details>
+
+      <div class="derived">
+        <span>你的租金收益率</span><b id="ryOut">—</b>
+      </div>
+      <div class="derived" style="border-top:0;padding-top:0;margin-top:6px">
+        <span>估值分组</span><b id="tercOut">—</b>
+      </div>
+      <div class="err" id="err" hidden></div>
+    </form>
+
+    <main>
+      <section class="verdict" id="verdict" style="--edge:var(--rent)">
+        <p class="vtag" id="vtag">正在计算…</p>
+        <p id="vtext"></p>
+      </section>
+
+      <section class="card" style="--edge:var(--rent)">
+        <h2>买房划算的概率</h2>
+        <div class="readout">
+          <span class="big" id="pWin">—</span>
+          <span class="range" id="pWinCI">95% 区间 —</span>
+        </div>
+        <div class="band">
+          <div class="track" id="trackWin">
+            <div class="rail"></div><div class="fill" id="fillWin"></div>
+            <div class="mid" style="left:50%"></div>
+            <div class="midlab" style="left:50%">五五开</div>
+            <div class="tick" id="tickWin"></div>
+          </div>
+          <div class="scale"><span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span></div>
+        </div>
+        <p class="note" id="winNote"></p>
+      </section>
+
+      <section class="card" style="--edge:var(--buy)">
+        <h2>买房打平需要房价涨多少</h2>
+        <div class="readout">
+          <span class="big" id="gStar">—</span>
+          <span class="range">扣掉通胀后，每年，连涨 <b id="gYears">10</b> 年</span>
+        </div>
+        <p class="note" id="gNote"></p>
+        <div class="tblwrap">
+          <table>
+            <thead><tr><th>历史上做到过这个涨幅的窗口</th><th>比例</th><th>95% 区间</th></tr></thead>
+            <tbody>
+              <tr><td>全部 16 国 1870–2020</td><td id="hUnc">—</td><td id="hUncCI">—</td></tr>
+              <tr id="condRow"><td id="condLab">与你同估值分组的起点</td><td id="hCond">—</td><td id="hCondCI">—</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="card" style="--edge:var(--buy)">
+        <h2>十年后，买比租多出（少掉）多少钱</h2>
+        <div class="readout">
+          <span class="big" id="gapMed">—</span>
+          <span class="range">中位情形，折成今天的钱</span>
+        </div>
+        <div class="band">
+          <div class="track" id="trackGap">
+            <div class="rail"></div><div class="fill" id="fillGap"></div>
+            <div class="mid" id="midGap"></div>
+            <div class="midlab" id="midGapLab">打平</div>
+            <div class="tick" id="tickGap"></div>
+          </div>
+          <div class="scale" id="gapScale"></div>
+        </div>
+        <p class="note" id="gapNote"></p>
+      </section>
+
+      <footer class="foot">
+        <p><strong>这个页面在算什么。</strong>把你的数字代入终值财富模型，解出"买房要打平、房价需要每年涨多少"，
+          再去 1870 年以来 16 个国家的全部历史窗口里数：这个涨幅实际出现过几次。
+          不预测未来，只报频率。所有区间以国家为整群（block）自助抽样得到——
+          历史窗口彼此重叠，不这样算出来的区间会窄得失真。</p>
+        <p><strong>它没算什么。</strong>只有金融账。居住稳定、学区、户口、搬家的自由、
+          负资产时的睡眠质量——这些的分量因人而异，得你自己加进去。
+          还有：你买的是<em>一套</em>房，不是全国指数；单套房的涨跌比指数散得多。</p>
+        <p><strong>一条不依赖任何预测的结论：</strong>打算住不到五年，交易成本基本已经判了买房输，不用看概率。</p>
+        <p>方法与全部数据见 <a href="https://github.com/LL145/buy-or-rent">github.com/LL145/buy-or-rent</a>。
+          数据来源 Jordà-Schularick-Taylor Macrohistory Database R6。本页不构成投资建议。</p>
+      </footer>
+    </main>
+  </div>
+</div>
+
+<script id="windowData" type="application/json">__WINDOW_DATA__</script>
+<script>
+const DATA = JSON.parse(document.getElementById("windowData").textContent);
+const HORIZONS = [5, 10, 15, 20];
+const N_BOOT = 1200;
+
+const snapHorizon = h => HORIZONS.reduce((a, b) => Math.abs(b - h) < Math.abs(a - h) ? b : a);
+
+/* ---------- 确定性核心: 与 buyrent/model.py 逐行对应 ---------- */
+function annuityPayment(principal, rate, years){
+  if (principal <= 0) return 0;
+  if (rate === 0) return principal / years;
+  const f = Math.pow(1 + rate, years);
+  return principal * rate * f / (f - 1);
+}
+function loanBalance(principal, rate, years, after){
+  if (principal <= 0 || after >= years) return 0;
+  const pay = annuityPayment(principal, rate, years);
+  if (rate === 0) return principal - pay * after;
+  return principal * Math.pow(1 + rate, after)
+       - pay * (Math.pow(1 + rate, after) - 1) / rate;
+}
+function simulate(s){
+  const p0 = 100, loan = (1 - s.down) * p0;
+  const pay = annuityPayment(loan, s.mortRate, s.mortYears);
+  let buyer = 0, renter = (s.down + s.buyCost) * p0 * Math.pow(1 + s.rInvest, s.hold);
+  for (let t = 1; t <= s.hold; t++){
+    const grow = Math.pow(1 + s.rInvest, s.hold - t + 1);
+    const houseT = p0 * Math.pow(1 + s.gHouse, t - 1);
+    const outBuy = (t <= s.mortYears ? pay : 0) + s.carry * houseT;
+    const outRent = s.rentYield * p0 * Math.pow(1 + s.gRent, t - 1);
+    const budget = Math.max(outBuy, outRent);
+    buyer += (budget - outBuy) * grow;
+    renter += (budget - outRent) * grow;
+  }
+  const houseT = p0 * Math.pow(1 + s.gHouse, s.hold);
+  const balT = loanBalance(loan, s.mortRate, s.mortYears, s.hold);
+  const wealthBuy = houseT * (1 - s.sellCost) - balT + buyer;
+  const gap = wealthBuy - renter;
+  return { gap, gapReal: gap / Math.pow(1 + s.infl, s.hold) / p0 };
+}
+/* 盈亏平衡涨幅: gap 对 g 单调递增, 二分 */
+function breakevenGrowth(s){
+  let lo = -0.20, hi = 0.25;
+  if (simulate({ ...s, gHouse: lo }).gap > 0) return lo;
+  if (simulate({ ...s, gHouse: hi }).gap < 0) return hi;
+  for (let i = 0; i < 80; i++){
+    const mid = (lo + hi) / 2;
+    if (simulate({ ...s, gHouse: mid }).gap > 0) hi = mid; else lo = mid;
+  }
+  return (lo + hi) / 2;
+}
+const nominal = (real, infl) => (1 + real) * (1 + infl) - 1;
+
+/* ---------- numpy 口径的线性插值分位数 ---------- */
+function percentile(sorted, q){
+  const idx = q / 100 * (sorted.length - 1);
+  const lo = Math.floor(idx), hi = Math.ceil(idx);
+  return lo === hi ? sorted[lo] : sorted[lo] + (sorted[hi] - sorted[lo]) * (idx - lo);
+}
+/* 可复现的伪随机数(mulberry32), 让同样的输入总给同样的区间 */
+function rng(seed){
+  return function(){
+    seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+    let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+/* 以国家为整群的自助区间: 重抽国家而非窗口——窗口彼此重叠, 按窗口抽会假装它们独立 */
+function countryBlockCI(isoArr, values, nBoot = N_BOOT, seed = 1){
+  const blocks = new Map();
+  for (let i = 0; i < isoArr.length; i++){
+    if (!blocks.has(isoArr[i])) blocks.set(isoArr[i], []);
+    blocks.get(isoArr[i]).push(values[i]);
+  }
+  const arr = [...blocks.values()], G = arr.length, rand = rng(seed), draws = [];
+  for (let b = 0; b < nBoot; b++){
+    let sum = 0, n = 0;
+    for (let g = 0; g < G; g++){
+      const blk = arr[(rand() * G) | 0];
+      for (let k = 0; k < blk.length; k++) sum += blk[k];
+      n += blk.length;
+    }
+    draws.push(sum / n);
+  }
+  draws.sort((a, b) => a - b);
+  return [percentile(draws, 2.5), percentile(draws, 97.5)];
+}
+
+/* ---------- 窗口池 ---------- */
+/* needFull=false 对应 History.prob_exceed(只需房价涨幅),
+   needFull=true 对应 History.pool(需五列齐全)。两者窗口数不同, 与 Python 一致。 */
+function pool(hold, tercile, needFull){
+  const H = DATA.horizons[String(snapHorizon(hold))];
+  const idx = [];
+  for (let i = 0; i < H.iso.length; i++){
+    if (tercile !== null && H.tercile[i] !== tercile) continue;
+    if (needFull && !H.full[i]) continue;
+    idx.push(i);
+  }
+  return { H, idx };
+}
+function probExceed(gReal, hold, tercile){
+  const { H, idx } = pool(hold, tercile, false);
+  const hit = idx.map(i => H.g_house[i] >= gReal ? 1 : 0);
+  const iso = idx.map(i => H.iso[i]);
+  const p = hit.reduce((a, b) => a + b, 0) / hit.length;
+  return { p, n: hit.length, ci: countryBlockCI(iso, hit) };
+}
+/* 全量求值: 遍历每个窗口, 不抽样——池子只有上千个, 精确且更快 */
+function evaluate(s, tercile){
+  const { H, idx } = pool(s.hold, tercile, true);
+  const gaps = [], wins = [], iso = [];
+  for (const i of idx){
+    const infl = s.inflFixed;
+    const out = simulate({ ...s,
+      gHouse: nominal(H.g_house[i], infl),
+      gRent: nominal(H.g_rent[i], infl),
+      rInvest: nominal(s.rInvestReal, infl),
+      infl });
+    gaps.push(out.gapReal); wins.push(out.gap > 0 ? 1 : 0); iso.push(H.iso[i]);
+  }
+  const sorted = [...gaps].sort((a, b) => a - b);
+  return {
+    p: wins.reduce((a, b) => a + b, 0) / wins.length,
+    ci: countryBlockCI(iso, wins),
+    n: gaps.length,
+    p5: percentile(sorted, 5), median: percentile(sorted, 50), p95: percentile(sorted, 95)
+  };
+}
+
+/* ---------- 视图 ---------- */
+const $ = id => document.getElementById(id);
+const pct = (x, d = 0) => (x * 100).toFixed(d) + "%";
+const signed = (x, d = 0) => (x >= 0 ? "+" : "−") + Math.abs(x * 100).toFixed(d) + "%";
+const num = id => parseFloat($(id).value);
+const TERC = ["比自己的历史便宜", "和自己的历史差不多", "比自己的历史贵"];
+
+function compute(){
+  const price = num("price") * 10000, rentM = num("rent"), hold = Math.round(num("hold"));
+  if (!(price > 0) || !(rentM > 0) || !(hold >= 1)){
+    $("err").hidden = false; $("err").textContent = "请把总价、月租、年数都填成正数。";
+    return;
+  }
+  $("err").hidden = true;
+  const rentYield = rentM * 12 / price;
+  const inflFixed = 0.005;   /* 浮动利率按揭下关闭固定利率独有的通胀对冲通道 */
+  const s = {
+    rentYield, down: num("down") / 100, mortRate: num("mort") / 100,
+    mortYears: Math.round(num("mortyears")), hold,
+    buyCost: num("buycost") / 100, sellCost: num("sellcost") / 100,
+    carry: num("carry") / 100, rInvestReal: num("rinv") / 100,
+    inflFixed, infl: inflFixed, gRent: inflFixed, rInvest: 0.06, gHouse: 0.02
+  };
+  /* g* 用固定通胀口径, 与历史分布同为真实量 */
+  const sDet = { ...s, rInvest: nominal(s.rInvestReal, inflFixed) };
+  const gStarNom = breakevenGrowth(sDet);
+  const gStarReal = (1 + gStarNom) / (1 + inflFixed) - 1;
+
+  const ryTyp = num("rytyp");
+  let tercile = null, dev = null;
+  if (ryTyp > 0){
+    dev = Math.log((ryTyp / 100) / rentYield);
+    const [q1, q2] = DATA.cutoffs[String(snapHorizon(hold))];
+    tercile = dev <= q1 ? 0 : (dev <= q2 ? 1 : 2);
+  }
+
+  const unc = probExceed(gStarReal, hold, null);
+  const cond = tercile === null ? null : probExceed(gStarReal, hold, tercile);
+  const mc = evaluate(s, tercile);
+
+  render({ rentYield, tercile, gStarReal, unc, cond, mc, hold });
+}
+
+function setBand(trackId, fillId, tickId, lo, hi, point, min, max){
+  const f = v => Math.max(0, Math.min(100, (v - min) / (max - min) * 100));
+  $(fillId).style.left = f(lo) + "%";
+  $(fillId).style.width = Math.max(0.6, f(hi) - f(lo)) + "%";
+  $(tickId).style.left = "calc(" + f(point) + "% - 1.5px)";
+}
+
+function render(r){
+  $("ryOut").textContent = pct(r.rentYield, 2);
+  $("tercOut").textContent = r.tercile === null ? "未指定" : TERC[r.tercile];
+  $("gYears").textContent = r.hold;
+
+  /* 胜率 */
+  $("pWin").textContent = pct(r.mc.p);
+  $("pWinCI").textContent = `95% 区间 ${pct(r.mc.ci[0])} – ${pct(r.mc.ci[1])}`;
+  setBand("trackWin", "fillWin", "tickWin", r.mc.ci[0], r.mc.ci[1], r.mc.p, 0, 1);
+  const width = (r.mc.ci[1] - r.mc.ci[0]) * 100;
+  $("winNote").innerHTML = `在 ${r.mc.n} 个同持有期的历史窗口里，买房财富胜过租房的占 `
+    + `<b>${pct(r.mc.p)}</b>。区间宽 ${width.toFixed(0)} 个百分点——`
+    + `这个数只能读到十位，把 ${pct(r.mc.p)} 和 ${pct(Math.min(0.99, r.mc.p + 0.05))} 当成不同答案是过度解读。`;
+
+  /* 盈亏平衡 */
+  $("gStar").textContent = signed(r.gStarReal, 1);
+  const med = 0.0101;
+  $("gNote").innerHTML = r.gStarReal <= med
+    ? `低于 1870 年以来的历史中位涨幅（+1.0%）——<b>买房打平不要求房价跑赢历史平均</b>，这是最关键的分界线。`
+    : `高于 1870 年以来的历史中位涨幅（+1.0%）——<b>买房划算的前提是房价跑赢历史平均水平</b>。`;
+  $("hUnc").textContent = pct(r.unc.p);
+  $("hUncCI").textContent = `${pct(r.unc.ci[0])} – ${pct(r.unc.ci[1])}`;
+  if (r.cond){
+    $("condRow").hidden = false;
+    $("condLab").textContent = `起点${TERC[r.tercile]}的窗口`;
+    $("hCond").textContent = pct(r.cond.p);
+    $("hCondCI").textContent = `${pct(r.cond.ci[0])} – ${pct(r.cond.ci[1])}`;
+  } else $("condRow").hidden = true;
+
+  /* 财富差 */
+  $("gapMed").textContent = signed(r.mc.median);
+  const lo = Math.min(r.mc.p5, -0.05), hi = Math.max(r.mc.p95, 0.05);
+  const pad = (hi - lo) * 0.08, min = lo - pad, max = hi + pad;
+  setBand("trackGap", "fillGap", "tickGap", r.mc.p5, r.mc.p95, r.mc.median, min, max);
+  const zero = (0 - min) / (max - min) * 100;
+  $("midGap").style.left = zero + "%";
+  $("midGapLab").style.left = zero + "%";
+  $("gapScale").innerHTML = `<span>${signed(min)}</span><span>${signed(max)}</span>`;
+  $("gapNote").innerHTML = `以房价的百分比计。九成的历史情形落在 `
+    + `<b>${signed(r.mc.p5)}</b> 到 <b>${signed(r.mc.p95)}</b> 之间。`
+    + `左端就是你要能扛住的那一面——买房加了杠杆，亏损按房价全额计，不按首付计。`;
+
+  /* 判词: 用区间而不是点估计下判断 */
+  const v = $("verdict"), lo95 = r.mc.ci[0], hi95 = r.mc.ci[1];
+  let edge, tag, text;
+  if (r.hold < 5){
+    edge = "var(--rent)"; tag = "住不到五年 —— 租";
+    text = `持有 ${r.hold} 年，买卖一次的交易成本要摊到这么短的时间里。`
+         + `这是全篇最不依赖预测的结论：不用看概率，租。`;
+  } else if (hi95 < 0.45){
+    edge = "var(--rent)"; tag = "金融账偏租";
+    text = `买房胜率的整个 95% 区间都在五五开以下（${pct(lo95)}–${pct(hi95)}）。`
+         + `要买，理由得来自金融账之外：学区、户口、居住稳定。`;
+  } else if (lo95 > 0.55){
+    edge = "var(--buy)"; tag = "金融账偏买";
+    text = `买房胜率的整个 95% 区间都在五五开以上（${pct(lo95)}–${pct(hi95)}）。`
+         + `在你填的这些数字下，买房不必依赖房价大涨就划算。`;
+  } else {
+    edge = "var(--warn)"; tag = "金融账不裁决";
+    text = `胜率区间 ${pct(lo95)}–${pct(hi95)} 横跨五五开，数据分不出胜负。`
+         + `这不是"随便"，而是<b>该由非金融因素定夺</b>：`
+         + `你有多想要稳定，和你有多需要随时能走。`;
+  }
+  v.style.setProperty("--edge", edge);
+  $("vtag").textContent = tag;
+  $("vtext").innerHTML = text;
+}
+
+/* 报头的国家数与窗口数由嵌入的数据算出, 不手写——手写的数字迟早会过期 */
+{
+  const n = Object.values(DATA.horizons).reduce((a, h) => a + h.iso.length, 0);
+  $("kickerSrc").textContent =
+    `JST 宏观历史数据库 · ${DATA.countries.length} 国 · 1870–2020`;
+  $("kickerN").textContent = `${n.toLocaleString("en-US")} 个历史窗口`;
+}
+
+let timer;
+$("form").addEventListener("input", () => {
+  clearTimeout(timer);
+  timer = setTimeout(compute, 140);
+});
+compute();
+</script>

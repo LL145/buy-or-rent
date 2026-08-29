@@ -16,7 +16,13 @@ jobs:
           cache: pip
       - run: pip install -r requirements.txt
 
-      # 模型、算法, 以及论文数字与 data/derived/ 的一致性
+      # 网页计算器把模型用 JavaScript 重写了一遍, 测试会在 node 里跑它并与
+      # Python 逐位对照(tests/test_web_calculator.py), 所以 CI 需要 node。
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # 模型、算法, 网页与 Python 的等价性, 以及论文数字与 data/derived/ 的一致性
       - name: pytest
         run: python -m pytest -q
 
@@ -31,3 +37,9 @@ jobs:
           python analysis/cases.py > /dev/null
           diff -u /tmp/uncertainty.before.json data/derived/uncertainty.json
           diff -u /tmp/cases.before.json data/derived/cases.json
+
+      - name: 网页计算器与数据同步
+        run: |
+          cp web/calculator.html /tmp/calculator.before.html
+          python analysis/build_web.py > /dev/null
+          diff -q /tmp/calculator.before.html web/calculator.html
