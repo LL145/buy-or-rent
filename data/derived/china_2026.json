@@ -28,7 +28,26 @@
     ],
     "gap_median_balanced": -0.177,
     "gap_p5_balanced": -0.515,
-    "gap_p95_balanced": 0.516
+    "gap_p95_balanced": 0.516,
+    "tercile_sensitivity": {
+      "mid": {
+        "p_buy": 0.463,
+        "p_buy_ci95": [
+          0.376,
+          0.566
+        ],
+        "p_hist": 0.435
+      },
+      "uncond": {
+        "p_buy": 0.447,
+        "p_buy_ci95": [
+          0.388,
+          0.505
+        ],
+        "p_hist": 0.429
+      }
+    },
+    "ry_typical_to_mid": 0.0205
   },
   {
     "city": "强二线(杭州苏州)",
@@ -59,7 +78,26 @@
     ],
     "gap_median_balanced": -0.151,
     "gap_p5_balanced": -0.492,
-    "gap_p95_balanced": 0.541
+    "gap_p95_balanced": 0.541,
+    "tercile_sensitivity": {
+      "mid": {
+        "p_buy": 0.496,
+        "p_buy_ci95": [
+          0.411,
+          0.59
+        ],
+        "p_hist": 0.456
+      },
+      "uncond": {
+        "p_buy": 0.47,
+        "p_buy_ci95": [
+          0.419,
+          0.522
+        ],
+        "p_hist": 0.448
+      }
+    },
+    "ry_typical_to_mid": 0.0228
   },
   {
     "city": "二线(成都武汉等)",
@@ -90,7 +128,26 @@
     ],
     "gap_median_balanced": -0.1,
     "gap_p5_balanced": -0.445,
-    "gap_p95_balanced": 0.591
+    "gap_p95_balanced": 0.591,
+    "tercile_sensitivity": {
+      "mid": {
+        "p_buy": 0.544,
+        "p_buy_ci95": [
+          0.464,
+          0.631
+        ],
+        "p_hist": 0.507
+      },
+      "uncond": {
+        "p_buy": 0.527,
+        "p_buy_ci95": [
+          0.482,
+          0.575
+        ],
+        "p_hist": 0.502
+      }
+    },
+    "ry_typical_to_mid": 0.0274
   },
   {
     "city": "三四线(人口流出)",
@@ -121,6 +178,25 @@
     ],
     "gap_median_balanced": -0.126,
     "gap_p5_balanced": -0.468,
-    "gap_p95_balanced": 0.566
+    "gap_p95_balanced": 0.566,
+    "tercile_sensitivity": {
+      "mid": {
+        "p_buy": 0.513,
+        "p_buy_ci95": [
+          0.426,
+          0.609
+        ],
+        "p_hist": 0.486
+      },
+      "uncond": {
+        "p_buy": 0.497,
+        "p_buy_ci95": [
+          0.447,
+          0.55
+        ],
+        "p_hist": 0.474
+      }
+    },
+    "ry_typical_to_mid": 0.0251
   }
 ]

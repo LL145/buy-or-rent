@@ -20,6 +20,8 @@ bash data/download.sh                     # 下载 JST 宏观历史数据库(不
 python3 analysis/stylized_facts.py        # 复现六个典型事实, 生成图表与派生数据
 python3 analysis/uncertainty.py           # 聚类标准误与整群自助置信区间
 python3 analysis/cases.py                 # 论文第7节的三个画像
+python3 analysis/china_2026.py            # 第8节: 2026 年中国分城市算例与估值假设敏感性
+python3 analysis/lookup_table.py          # 第8.4节: 租金收益率 × 持有期 速查表
 python3 analysis/algorithm_figures.py     # 算法输出总览图
 python3 analysis/build_web.py             # 生成单文件网页计算器
 ```
@@ -57,6 +59,8 @@ print(run(s, hist, tercile=2))    # 胜率(含95%区间)与财富差分布
   金融账基本打平（胜率 46%，区间 [39, 54]）；一线仍偏租（26–36%）但期望代价从
   30%+ 房价缩到约一成。相邻城市档的区间大幅重叠，表支持梯度而非排序；
   三四线按耐用消费品逻辑对待；日本路径（1990 后十年年化 −2.2%）是所有城市共同的左尾。
+  各城"常态租金收益率"是假设而非数据，论文 8.2 节末给出翻转门槛与换组后的胜率：
+  二线的假设离门槛只有 6 个基点，换组后胜率 54%；所有敏感性都只朝利好买方的方向移动。
   含分城市 × 分年龄 × 分收入的建议矩阵，以及"租金收益率 × 持有期"二因素速查表（8.4 节）。
   中国按揭为 LPR 浮动利率，模型相应关闭了固定利率按揭的通胀对冲通道。
 
@@ -72,7 +76,7 @@ print(run(s, hist, tercile=2))    # 胜率(含95%区间)与财富差分布
 | `data/` | 数据说明与下载脚本；`data/derived/` 为入库的派生统计量 |
 | `web/` | 单文件网页计算器：`index.html`（独立文档，GitHub Pages 与本地直接打开）与 `calculator.html`（片段版）。模型的 JS 实现，输入总价与月租即可，无需装 Python |
 | `tests/` | 单元测试 + 论文数字与派生数据的一致性检查（`python3 -m pytest`） |
-| `.github/workflows/` | CI：跑测试，并验证派生数据能由入库的 `windows.csv` 重新生成 |
+| `.github/workflows/` | CI：跑测试，并验证全部派生数据能由入库的 `windows.csv` 重新生成；另有一个手动/每月触发的工作流下载 JST 原始数据、重跑 `stylized_facts.py`，验证 `windows.csv` 本身可复现 |
 
 数据引用要求见 [data/README.md](data/README.md)（JST Macrohistory Database）。
 
@@ -80,6 +84,9 @@ print(run(s, hist, tercile=2))    # 胜率(含95%区间)与财富差分布
 
 **<https://ll145.github.io/buy-or-rent/>** —— 单文件页面，把 5834 个历史窗口和完整算法都嵌在里面，打开即用，不联网也能算。
 普通人只需填三个数：房子总价、同小区月租、打算住几年。
+默认口径是 2026 年的中国（浮动利率按揭、通胀 0.5%、租房者只拿存款理财级别的收益）；
+把"按揭利率类型"切到固定，就换成论文第 7 节画像 B 的美式口径——通胀与股六债四回报取各历史窗口的联合实现值。
+历史窗口只有 5/10/15/20 年四档，页面会标出你填的年数实际用了哪一档。
 
 `analysis/build_web.py` 由同一个模板产出两份：`web/index.html` 是完整文档
 （带 charset 与 viewport，供 GitHub Pages 部署或本地双击打开），

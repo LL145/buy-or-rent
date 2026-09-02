@@ -161,6 +161,35 @@ def test_china_table_rows(docs):
             f"第8.2节 {label}投资者行与 china_2026.json 不一致\n  期望: {cells}")
 
 
+def test_china_valuation_assumption_sensitivity(docs):
+    """各城"常态租金收益率"是假设; 论文必须报告翻转门槛与换组后的胜率。"""
+    rows = load("china_2026.json")
+
+    def ci(v):
+        return f"[{v[0] * 100:.0f}, {v[1] * 100:.0f}]"
+
+    for r in rows:
+        s = r["tercile_sensitivity"]
+        # 门槛的定义: 常态低于 ry·exp(q2) 即落入中间组
+        assert r["ry_typical_to_mid"] < r["ry_typical"], "该城本应在高估组"
+        # 放松高估假设只会利好买方——论文据此说正文口径是"对买方最保守"的一端
+        assert s["mid"]["p_buy"] > r["p_buy_conservative"]
+        assert s["uncond"]["p_buy"] > r["p_buy_conservative"]
+        for f in ("paper.md", "paper.tex"):
+            must_contain(docs, f, f"{r['ry_typical_to_mid'] * 100:.2f}%", f"{r['city']} 的门槛")
+            must_contain(docs, f, f"{s['mid']['p_buy']:.0%} {ci(s['mid']['p_buy_ci95'])}",
+                         f"{r['city']} 中间组胜率")
+            must_contain(docs, f, f"{s['uncond']['p_buy']:.0%} {ci(s['uncond']['p_buy_ci95'])}",
+                         f"{r['city']} 不分组胜率")
+    # 论文的论断: 二线卡在边界上(与门槛相差不到 25 个基点), 换组后仍不越过 55%
+    t2 = rows[2]
+    assert t2["ry_typical"] - t2["ry_typical_to_mid"] < 0.0025
+    assert t2["tercile_sensitivity"]["mid"]["p_buy"] < 0.55
+    bp = round((t2["ry_typical"] - t2["ry_typical_to_mid"]) * 10000)
+    for f in ("paper.md", "paper.tex"):
+        must_contain(docs, f, f"只有 {bp} 个基点")
+
+
 def test_china_tier_intervals_overlap():
     """论文据此说"支持梯度而非排序"。若不再重叠, 该表述需重写。"""
     rows = load("china_2026.json")
@@ -190,6 +219,12 @@ def test_readme_headline_numbers(docs):
                      f"[{d['ci95'][0] * 100:.0f}, {d['ci95'][1] * 100:.0f}]")
     must_contain(docs, "README.md", f"{u['mean_reversion']['10']['twoway']['t']:.2f}")
     must_contain(docs, "README.md", "16 国")
+    # README 里对二线估值假设敏感性的一句话概括
+    t2 = load("china_2026.json")[2]
+    bp = round((t2["ry_typical"] - t2["ry_typical_to_mid"]) * 10000)
+    must_contain(docs, "README.md", f"只有 {bp} 个基点")
+    must_contain(docs, "README.md",
+                 f"换组后胜率 {t2['tercile_sensitivity']['mid']['p_buy']:.0%}")
 
 
 # --------------------------------------------------- 体制稳健性(局限第1条)

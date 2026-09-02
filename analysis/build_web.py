@@ -39,9 +39,13 @@ def payload() -> dict:
     imap = {c: i for i, c in enumerate(isos)}
     with open(ROOT / "data" / "derived" / "tercile_cutoffs.json") as f:
         cutoffs = json.load(f)
-    out = {"countries": isos, "cutoffs": cutoffs, "horizons": {}}
+    out = {"countries": isos, "cutoffs": cutoffs, "horizons": {},
+           # 各持有期的历史中位涨幅——页面用它判断"打平是否要求跑赢历史";
+           # 十年期的这个数就是论文里的 +1.0%(key_stats.g10_quantiles["50"])
+           "median_g": {}}
     for h, sub in win.groupby("horizon"):
         full = sub[COLS].notna().all(axis=1)
+        out["median_g"][str(int(h))] = float(sub.g_house.median())
         out["horizons"][str(int(h))] = {
             "iso": [imap[c] for c in sub.iso],
             # -1 = 该窗口起点缺少足够的租售比历史, 无法定估值分组

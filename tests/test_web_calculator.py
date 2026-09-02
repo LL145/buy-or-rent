@@ -36,6 +36,15 @@ SCENARIOS = [
     dict(rent_yield=0.055, down=0.40, mort_rate=0.065, mort_years=30, hold=15,
          buy_cost=0.03, sell_cost=0.04, carry=0.012, r_invest_real=0.035,
          infl_fixed=0.02, tercile=0),
+    # 固定利率口径(论文第7节画像 B 的美式市场): 通胀与股六债四回报取窗口联合值,
+    # 对应 run() 的默认路径; infl_fixed 此时只用于把 g* 折成真实值
+    dict(rent_yield=0.055, down=0.30, mort_rate=0.065, mort_years=30, hold=10,
+         buy_cost=0.03, sell_cost=0.04, carry=0.012, r_invest_real=0.039,
+         infl_fixed=0.02, tercile=1, fixed_rate=True),
+    # 固定利率 + 不分组 + 取整到 20 年窗口
+    dict(rent_yield=0.030, down=0.20, mort_rate=0.050, mort_years=30, hold=25,
+         buy_cost=0.03, sell_cost=0.04, carry=0.012, r_invest_real=0.030,
+         infl_fixed=0.03, tercile=None, fixed_rate=True),
 ]
 
 pytestmark = pytest.mark.skipif(
@@ -53,8 +62,11 @@ def python_side(c):
     g_real = (1 + g_nom) / (1 + c["infl_fixed"]) - 1
     hist = History()
     p_hist, n_hist = hist.prob_exceed(g_real, c["hold"], c["tercile"])
-    mc = run(s, hist, tercile=c["tercile"], r_invest_real=c["r_invest_real"],
-             infl_fixed=c["infl_fixed"], n_boot=0)
+    if c.get("fixed_rate"):
+        mc = run(s, hist, tercile=c["tercile"], n_boot=0)
+    else:
+        mc = run(s, hist, tercile=c["tercile"], r_invest_real=c["r_invest_real"],
+                 infl_fixed=c["infl_fixed"], n_boot=0)
     q = mc["gap_real_pct_of_price"]
     return dict(g_star_real=g_real, p_hist=p_hist, n_hist=n_hist,
                 p_buy_wins=mc["p_buy_wins"], n_windows=mc["n_windows"],
@@ -100,6 +112,17 @@ def test_page_is_built_from_current_data():
         subset=["g_house"])
     embedded = sum(len(v["iso"]) for v in data["horizons"].values())
     assert embedded == len(win), "web/calculator.html 已过期, 请重跑 analysis/build_web.py"
+
+
+def test_embedded_medians_match_key_stats():
+    """页面判断"打平是否要求跑赢历史"用的中位涨幅不再手写, 必须等于派生数据。"""
+    html = PAGE.read_text(encoding="utf-8")
+    start = html.index('<script id="windowData" type="application/json">')
+    data = json.loads(html[start:].split(">", 1)[1].split("</script>")[0])
+    ks = json.load(open(ROOT / "data" / "derived" / "key_stats.json", encoding="utf-8"))
+    assert set(data["median_g"]) == {"5", "10", "15", "20"}
+    assert round(data["median_g"]["10"], 5) == ks["g10_quantiles"]["50"]
+    assert len(data["countries"]) == ks["n_countries_windows"]
 
 
 def test_standalone_document_is_publishable():

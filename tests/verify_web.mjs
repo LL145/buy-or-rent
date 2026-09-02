@@ -23,6 +23,7 @@ const out = scenarios.map(c => {
     mortYears: c.mort_years, hold: c.hold, buyCost: c.buy_cost,
     sellCost: c.sell_cost, carry: c.carry, rInvestReal: c.r_invest_real,
     inflFixed: infl, infl, gRent: infl, rInvest: 0.06, gHouse: 0.02,
+    fixedRate: !!c.fixed_rate,   /* true = 固定利率口径, 对应 run() 默认路径 */
   };
   const gNom = m.breakevenGrowth({ ...s, rInvest: m.nominal(c.r_invest_real, infl) });
   const gReal = (1 + gNom) / (1 + infl) - 1;

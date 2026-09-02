@@ -1,0 +1,39 @@
+# 验证 data/derived/windows.csv 本身可由原始数据复现。
+#
+# ci.yml 只能从入库的 windows.csv 往下验证; 这一环(原始 JST 数据 → windows.csv,
+# key_stats.json, tercile_cutoffs.json)因为原始数据不入库而没有防线。
+# 这里按需(或每月一次)下载 JST R6, 重跑 analysis/stylized_facts.py, 与入库文件 diff。
+# 只 diff 数据文件, 不 diff 图: PNG 随字体与 matplotlib 版本变化, 不是可复现性问题。
+name: Reproduce windows.csv from raw JST data
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 6 1 * *'   # 每月 1 日
+
+jobs:
+  reproduce:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - run: pip install -r requirements.txt
+      # 图表里有中文标签; 没有中文字体只会出警告和方块, 但装上更接近入库的图
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq fonts-wqy-zenhei > /dev/null
+
+      - name: 下载 JST Macrohistory Database R6
+        run: bash data/download.sh
+
+      - name: 重跑 stylized_facts.py 并与入库文件比对
+        run: |
+          for f in data/derived/windows.csv data/derived/key_stats.json data/derived/tercile_cutoffs.json; do
+            cp "$f" "/tmp/$(basename "$f").before"
+          done
+          python analysis/stylized_facts.py > /dev/null
+          for f in data/derived/windows.csv data/derived/key_stats.json data/derived/tercile_cutoffs.json; do
+            diff -u "/tmp/$(basename "$f").before" "$f"
+          done
+          echo "windows.csv, key_stats.json, tercile_cutoffs.json 均可由原始数据复现"

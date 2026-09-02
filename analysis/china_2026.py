@@ -41,7 +41,10 @@ COMMON = dict(down=0.30, mort_rate=0.031, mort_years=30, buy_cost=0.025,
               sell_cost=0.015, carry=0.007, infl=0.005, g_rent=0.005,
               r_invest=0.02, hold=10)
 
-# (名称, 当前租金收益率, 本市25年常态租金收益率的保守估计)
+# (名称, 当前租金收益率, 本市25年常态租金收益率)
+# 第三项是**假设**而非数据: 中国没有公开的城市级 25 年租金收益率序列可查。
+# 它只通过估值分组(三分位)进入模型, 所以下面对每个城市另算"若落入中间组 /
+# 不分组"的结果, 以及常态低到多少就会换组——论文第 8.2 节必须把这个边界写出来。
 CITIES = [
     ("一线城市\n(京沪广深)", 0.018, 0.024),
     ("强二线\n(杭州苏州)", 0.020, 0.024),
@@ -78,6 +81,18 @@ for name, ry, ry_typ in CITIES:
             mc["gap_real_pct_of_price"]["median"], 3)
         row[f"gap_p5_{key}"] = round(mc["gap_real_pct_of_price"]["p5"], 3)
         row[f"gap_p95_{key}"] = round(mc["gap_real_pct_of_price"]["p95"], 3)
+    # 估值分组的敏感性(保守投资者): 当前组 / 中间组 / 不分组。
+    # 常态租金收益率低于 ry·exp(q2) 时该城落入中间组——这就是假设的"翻转门槛"。
+    q2 = hist.cutoffs[s.hold][1]
+    sens = {}
+    for label, t in (("mid", 1), ("uncond", None)):
+        mc = run(s, hist, tercile=t, r_invest_real=0.015, infl_fixed=0.005,
+                 seed=11)
+        sens[label] = {"p_buy": round(mc["p_buy_wins"], 3),
+                       "p_buy_ci95": [round(v, 3) for v in mc["p_buy_wins_ci95"]],
+                       "p_hist": round(hist.prob_exceed(g_star_r, s.hold, t)[0], 3)}
+    row["tercile_sensitivity"] = sens
+    row["ry_typical_to_mid"] = round(float(ry * np.exp(q2)), 4)
     rows.append(row)
     print(row)
 

@@ -31,8 +31,9 @@
 - **B 层 半可预测**：未来房价涨幅 → 用期初估值（租售比三分位）条件化历史分布
 - **C 层 不可约不确定**：股债收益、通胀体制 → 用 150 年历史联合分布代言
 
-算法四层：确定性核心 → 解盈亏平衡涨幅 g\* → 历史频率查询 → 历史窗口自助法蒙特卡洛。
-蒙特卡洛**不假设参数分布**，直接自助抽样真实历史窗口的联合实现值，保留变量间
+算法五层：确定性核心 → 解盈亏平衡涨幅 g\* → 历史频率查询 → 历史窗口**全量求值**
+（遍历同持有期的每一个窗口，不抽样）→ 以国家为整群的自助法给每个概率配 95% 区间。
+全量求值**不假设参数分布**，直接代入真实历史窗口的联合实现值，保留变量间
 相关结构（通胀对冲、股房共动）。
 
 **红线**：不要为了让结论更"干脆"而收窄不确定性。诚实的答案是概率区间，
@@ -42,11 +43,11 @@
 
 | 路径 | 内容 |
 |---|---|
-| `paper/paper.md` | 论文初稿（真源）；`paper.tex`/`paper.pdf` 由其派生，`paper/build.sh` 编译 |
+| `paper/paper.md` | 论文初稿（真源）；`paper.tex` 是手工维护的镜像（没有自动转换），`paper/build.sh` 编译出 `paper.pdf`。改 md 必须同步改 tex，`tests/test_paper_consistency.py` 对两者都检查 |
 | `docs/research-framework.md` | 研究框架：变量三分法、文献、算法设计 |
-| `analysis/` | 实证脚本：`stylized_facts.py`（六个典型事实）、`algorithm_figures.py`、`china_2026.py`、`lookup_table.py` |
+| `analysis/` | 实证脚本：`stylized_facts.py`（六个典型事实、生成 `windows.csv`）、`uncertainty.py`（聚类标准误与整群自助区间）、`cases.py`（第 7 节画像）、`china_2026.py`（第 8 节，含估值假设敏感性）、`lookup_table.py`（8.4 速查表）、`algorithm_figures.py`、`build_web.py` |
 | `buyrent/` | 算法包：`model.py` `breakeven.py` `history.py` `montecarlo.py` `bootstrap.py`。<br>无命令行入口——面向使用者的是网页，本包是论文与网页数据背后的引擎 |
-| `web/` | 网页计算器：`calculator.template.html` 是真源，`index.html`（Pages）与 `calculator.html`（Artifact）由 `analysis/build_web.py` 生成 |
+| `web/` | 网页计算器：`calculator.template.html` 是真源，`index.html`（Pages）与 `calculator.html`（Artifact）由 `analysis/build_web.py` 生成。默认口径是 2026 年中国（浮动利率）；有固定利率开关对应 `run()` 默认路径。页面里不手写任何派生数字（中位涨幅、国家数都由嵌入数据算出） |
 | `data/derived/` | 入库的派生统计量（原始 JST 数据不入库，用 `data/download.sh` 下载） |
 | `figures/` | fig1–fig7 |
 | `tests/` | `python3 -m pytest` |
@@ -56,13 +57,17 @@
 - 改了模型或实证口径 → 重跑相关 `analysis/` 脚本 → 同步更新 `data/derived/`、
   `figures/`、`paper/paper.md`、`paper/paper.tex`、`README.md` 里的数字。四处数字必须一致。
 - 提交前跑 `python3 -m pytest`。
+- CI 会重跑 `uncertainty.py` `cases.py` `china_2026.py` `lookup_table.py` `build_web.py` 并 diff，
+  所以派生 JSON 与网页不能手改。`windows.csv` 由 `.github/workflows/reproduce-windows.yml`
+  （手动或每月）下载原始数据重跑 `stylized_facts.py` 验证。
 - 论文与 README 用中文写作；代码注释和标识符用英文。
 - **分支：所有改动直接提交并推到 `main`。** 除非用户明确要求，不新建分支、不开 PR。
   推送用 `git push -u origin main`。
 
-## 当前状态（截至 2026-08）
+## 当前状态（截至 2026-09）
 
 论文十节已成稿，含 2026 年中国案例研究（分城市 × 分年龄 × 分收入建议矩阵、
 "租金收益率 × 持有期"二因素速查表）。核心经验法则：按揭 4.5%、首付三成时，
 **租金收益率 ≈4.5% 是买房不靠涨价也划算的分水岭**；持有期不足 5 年交易成本
-几乎注定租房更优。
+几乎注定租房更优。第 8 节中国案例的"常态租金收益率"是假设，8.2 节末已报告其翻转门槛与
+敏感性（二线离门槛只有几个基点；所有敏感性只朝利好买方方向移动）。
