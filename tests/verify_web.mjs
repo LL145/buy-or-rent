@@ -13,7 +13,7 @@ js = js.replace('const DATA = JSON.parse(document.getElementById("windowData").t
 js = js.split('/* ---------- 视图 ---------- */')[0];
 process.env.WD = data;
 const m = await import('data:text/javascript,' + encodeURIComponent(
-  js + '\nexport {simulate, breakevenGrowth, probExceed, evaluate, nominal};'));
+  js + '\nexport {simulate, breakevenGrowth, probExceed, evaluate, nominal, verdictFor, stressPaths, BAND_STEP};'));
 
 const scenarios = JSON.parse(fs.readFileSync(0, 'utf8'));
 const out = scenarios.map(c => {
@@ -29,11 +29,18 @@ const out = scenarios.map(c => {
   const gReal = (1 + gNom) / (1 + infl) - 1;
   const hist = m.probExceed(gReal, c.hold, c.tercile);
   const ev = m.evaluate(s, c.tercile);
+  /* 第二档(高 1.5pp)与判词, 与页面 compute() 同一路径 */
+  const evB = s.fixedRate ? null
+    : m.evaluate({ ...s, rInvestReal: s.rInvestReal + m.BAND_STEP }, c.tercile);
+  const paths = m.stressPaths(s, c.median_g);
   return {
     g_star_real: gReal, p_hist: hist.p, n_hist: hist.n,
     p_buy_wins: ev.p, n_windows: ev.n,
     gap_p5: ev.p5, gap_median: ev.median, gap_p95: ev.p95,
     p_buy_ci: ev.ci,
+    p_buy_band2: evB ? evB.p : null,
+    verdict: m.verdictFor(c.hold, ev.ci, evB ? evB.p : null),
+    stress: Object.fromEntries(paths.map(p => [p.label, p.gap])),
   };
 });
 console.log(JSON.stringify(out));

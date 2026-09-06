@@ -7,11 +7,13 @@ web/calculator.html 把模型重新实现了一遍(JavaScript, 好让不装 Pyth
 import json
 import shutil
 import subprocess
+from dataclasses import replace
 from pathlib import Path
 
+import numpy as np
 import pytest
 
-from buyrent import History, Scenario, breakeven_growth, run
+from buyrent import History, Scenario, breakeven_growth, run, simulate
 from buyrent.montecarlo import nominal
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -47,9 +49,21 @@ SCENARIOS = [
          infl_fixed=0.03, tercile=None, fixed_rate=True),
 ]
 
+# 论文 8.4 速查表的全部格子(中国 2026 口径, 不分组): 网页判词不得与表格判定矛盾
+LOOKUP_COMMON = dict(down=0.30, mort_rate=0.031, mort_years=30, buy_cost=0.025,
+                     sell_cost=0.015, carry=0.007, r_invest_real=0.015,
+                     infl_fixed=0.005, tercile=None)
+LOOKUP_CELLS = [dict(rent_yield=ry, hold=h, **LOOKUP_COMMON)
+                for h in (3, 5, 10, 15, 20)
+                for ry in (0.015, 0.020, 0.025, 0.030, 0.040, 0.050)]
+
 pytestmark = pytest.mark.skipif(
     shutil.which("node") is None or not PAGE.exists(),
     reason="需要 node 与已构建的 web/calculator.html (python3 analysis/build_web.py)")
+
+
+def median_g(hist, hold):
+    return float(np.median(hist.pool(hold).g_house))
 
 
 def python_side(c):
@@ -68,15 +82,30 @@ def python_side(c):
         mc = run(s, hist, tercile=c["tercile"], r_invest_real=c["r_invest_real"],
                  infl_fixed=c["infl_fixed"], n_boot=0)
     q = mc["gap_real_pct_of_price"]
-    return dict(g_star_real=g_real, p_hist=p_hist, n_hist=n_hist,
-                p_buy_wins=mc["p_buy_wins"], n_windows=mc["n_windows"],
-                gap_p5=q["p5"], gap_median=q["median"], gap_p95=q["p95"])
+    out = dict(g_star_real=g_real, p_hist=p_hist, n_hist=n_hist,
+               p_buy_wins=mc["p_buy_wins"], n_windows=mc["n_windows"],
+               gap_p5=q["p5"], gap_median=q["median"], gap_p95=q["p95"])
+    if not c.get("fixed_rate"):
+        # 第二档(高 1.5pp), 页面判词的稳健带
+        out["p_buy_band2"] = run(s, hist, tercile=c["tercile"],
+                                 r_invest_real=c["r_invest_real"] + 0.015,
+                                 infl_fixed=c["infl_fixed"], n_boot=0)["p_buy_wins"]
+    # 命名路径: 与 analysis/stress.py 的 gap_under 同一口径
+    med = median_g(hist, c["hold"])
+    out["stress"] = {
+        lab: simulate(replace(s, g_house=nominal(g, c["infl_fixed"])))["gap_real"] / s.price
+        for lab, g in (("历史中位路径", med), ("房价横盘", 0.0), ("日本路径", -0.02))}
+    return out
 
 
 @pytest.fixture(scope="module")
 def js_results():
-    proc = subprocess.run(["node", str(HARNESS)], input=json.dumps(SCENARIOS),
-                          capture_output=True, text=True, timeout=180)
+    hist = History()
+    # 页面从嵌入数据取历史中位涨幅; 这里把同一个数交给 harness
+    payload = [dict(c, median_g=median_g(hist, c["hold"]))
+               for c in SCENARIOS + LOOKUP_CELLS]
+    proc = subprocess.run(["node", str(HARNESS)], input=json.dumps(payload),
+                          capture_output=True, text=True, timeout=300)
     assert proc.returncode == 0, f"node 运行失败:\n{proc.stderr}"
     return json.loads(proc.stdout)
 
@@ -91,11 +120,34 @@ def test_js_matches_python(js_results, i):
               "gap_p5", "gap_median", "gap_p95"):
         assert js[k] == pytest.approx(py[k], abs=1e-9), (
             f"场景 {i} 的 {k} 不一致: JS {js[k]} vs Python {py[k]}")
+    if "p_buy_band2" in py:
+        assert js["p_buy_band2"] == pytest.approx(py["p_buy_band2"], abs=1e-9)
+    else:
+        assert js["p_buy_band2"] is None
+    for lab, v in py["stress"].items():
+        assert js["stress"][lab] == pytest.approx(v, abs=1e-9), f"命名路径 {lab} 不一致"
+
+
+def test_js_verdict_never_contradicts_lookup_table(js_results):
+    """网页判词与论文 8.4 速查表用同一条规则(两档同向), 因此网页说"偏买"的格子
+    表格必须也是"买", 网页说"偏租"的格子表格必须也是"租"。网页多要求区间,
+    所以可以比表格更保守(表格"买"而网页"不裁决"), 但不能更激进。"""
+    table = json.load(open(ROOT / "data" / "derived" / "lookup_table.json",
+                           encoding="utf-8"))
+    for c, js in zip(LOOKUP_CELLS, js_results[len(SCENARIOS):]):
+        paper = table[f"{c['hold']}|{c['rent_yield']}"]["verdict"]
+        v = js["verdict"]
+        if v == "buy":
+            assert paper == "买", f"ry={c['rent_yield']:.1%} hold={c['hold']}: 网页偏买, 表格{paper}"
+        if v == "rent":
+            assert paper == "租", f"ry={c['rent_yield']:.1%} hold={c['hold']}: 网页偏租, 表格{paper}"
+        if v == "short":
+            assert c["hold"] < 5
 
 
 def test_js_ci_brackets_point(js_results):
     """两边用不同的伪随机数, 区间不会逐位相同; 但必须包住点估计且宽度合理。"""
-    for js in js_results:
+    for js in js_results[:len(SCENARIOS)]:
         lo, hi = js["p_buy_ci"]
         assert lo <= js["p_buy_wins"] <= hi
         assert 0.0 < hi - lo < 0.35

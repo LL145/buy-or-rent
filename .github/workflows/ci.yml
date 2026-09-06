@@ -33,14 +33,15 @@ jobs:
       # 漏检就等于允许手改结论。(windows.csv 本身由 reproduce-windows.yml 验证。)
       - name: 派生数据可复现
         run: |
-          for f in uncertainty cases china_2026 lookup_table; do
+          for f in uncertainty cases china_2026 lookup_table stress; do
             cp data/derived/$f.json /tmp/$f.before.json
           done
           python analysis/uncertainty.py > /dev/null
           python analysis/cases.py > /dev/null
           python analysis/china_2026.py > /dev/null
           python analysis/lookup_table.py > /dev/null
-          for f in uncertainty cases china_2026 lookup_table; do
+          python analysis/stress.py > /dev/null
+          for f in uncertainty cases china_2026 lookup_table stress; do
             diff -u /tmp/$f.before.json data/derived/$f.json
           done
 

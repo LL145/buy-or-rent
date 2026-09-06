@@ -28,7 +28,7 @@ def norm(text: str) -> str:
     `\\textbf{}` 与转义的 `\\%`、以及 U+2212 与 ASCII 两种负号。
     比较的是内容, 不是排版。
     """
-    t = text.replace("−", "-").replace("–", "-").replace("\\%", "%")
+    t = text.replace("−", "-").replace("–", "-").replace("--", "-").replace("\\%", "%")
     for tok in ("\\textbf", "\\mathbf", "\\scriptsize", "\\texttt"):
         t = t.replace(tok, "")
     for ch in ("**", "$", "{", "}"):
@@ -257,3 +257,105 @@ def test_idio_sensitivity_table(docs):
         for sd in ("0.00", "0.05", "0.10", "0.15"):
             must_contain(docs, f, f"{a[sd]['p_buy_wins']:.0%}", f"画像A idio={sd}")
             must_contain(docs, f, f"{b[sd]['gap_p5']:+.0%}", f"画像B p5 idio={sd}")
+
+
+# ------------------------------------------ 第8节 压力情景与稳健性(stress.py)
+def test_stress_scenarios_table(docs):
+    """横盘 / 日本路径 / 历史中位 三条命名路径的财富差, 过去是手算抄进正文的。"""
+    st = load("stress.json")
+    order = ["一线城市(京沪广深)", "强二线(杭州苏州)", "二线(成都武汉等)", "三四线(人口流出)"]
+    cities = [st["cities"][k] for k in order]
+    for key, label in (("gap_median", "历史中位路径"), ("gap_flat", "房价横盘"),
+                       ("gap_japan", "日本路径")):
+        row = " | ".join(f"{c[key]:+.0%}" for c in cities)
+        assert norm(row) in docs["paper.md"], f"8.2 节压力表的 {label} 行与 stress.json 不一致: {row}"
+    # 历史中位路径的年化涨幅要写在表头里
+    must_contain(docs, "paper.md", f"真实 +{st['median_g10_real'] * 100:.1f}%/年")
+    # 三四线按卖出成本 5% 重算的两个数
+    t34 = st["cities"]["三四线(人口流出)"]["sell_cost_5pct"]
+    for f in ("paper.md", "paper.tex"):
+        must_contain(docs, f, f"横盘十年亏 {-t34['gap_flat'] * 100:.0f}%、日本路径亏 {-t34['gap_japan'] * 100:.0f}%")
+        # 8.3 节引用一线的日本路径亏损
+        must_contain(docs, f, f"日本路径下亏 {-cities[0]['gap_japan'] * 100:.0f}% 房价")
+        # 二线横盘亏损在 8.3 节被引用
+        must_contain(docs, f, f"横盘亏 {-cities[2]['gap_flat'] * 100:.0f}%")
+
+
+def test_floating_rate_hedge_uplift(docs):
+    """照搬历史通胀会把胜率抬高多少——正文引用的范围必须等于脚本算出的范围。"""
+    st = load("stress.json")
+    lo, hi = st["hedge_uplift_pp_range"]
+    assert lo > 10, "浮动利率修正若不再重要, 第8节引言需重写"
+    for f in ("paper.md", "paper.tex"):
+        must_contain(docs, f, f"{lo:.1f}-{hi:.1f} 个百分点")
+
+
+def test_tier1_2021_contrast(docs):
+    st = load("stress.json")["tier1_2021_vs_2026"]
+    a, b = st["2021"], st["2026"]
+    assert a["g_star_real"] > b["g_star_real"] + 0.005
+    for f in ("paper.md", "paper.tex"):
+        must_contain(docs, f, f"+{a['g_star_real'] * 100:.1f}% 的真实涨幅")
+        must_contain(docs, f, f"只有 {a['p_hist_cond']:.0%}")
+        must_contain(docs, f, f"只需要 +{b['g_star_real'] * 100:.1f}%")
+        must_contain(docs, f, f"条件频率升到 {b['p_hist_cond']:.0%}")
+
+
+def test_g_star_elasticities(docs):
+    e = load("stress.json")["g_star_elasticity_pp"]
+    assert e["rent_yield_+1pp"] < 0 < e["mort_rate_+1pp"]
+    assert abs(e["g_rent_+1pp"]) < 0.25, "租金涨幅若不再是小项, 8.4 节的轴选择需重议"
+    for f in ("paper.md", "paper.tex"):
+        must_contain(docs, f, f"约 {e['rent_yield_+1pp']:.2f}pp")
+        must_contain(docs, f, f"{e['mort_rate_+1pp']:+.2f}pp")
+        must_contain(docs, f, f"{e['r_invest_+1pp']:+.2f}pp")
+        must_contain(docs, f, f"{e['g_rent_+1pp']:+.2f}pp")
+        arrow = "\\to" if f.endswith(".tex") else "→"
+        must_contain(docs, f, f"10{arrow}5 年 {e['hold_10_to_5']:+.2f}pp；10{arrow}20 年 {e['hold_10_to_20']:+.2f}pp")
+
+
+def test_lookup_table_interval_width(docs):
+    """8.4 的"格内区间约 ±N 个百分点"必须是算出来的 N。"""
+    hw = load("lookup_table.json")["_ci_half_width_pp"]
+    for f in ("paper.md", "paper.tex"):
+        must_contain(docs, f, f"半宽中位数为 {hw['median']:.1f} 个百分点、最宽 {hw['max']:.1f} 个百分点")
+
+
+def test_country_weighting_does_not_move_conclusion(docs):
+    st = load("stress.json")
+    for c in st["cities"].values():
+        w = c["weighting"]
+        assert abs(w["country_weighted"] - w["window_weighted"]) < 0.01, (
+            "国家等权与窗口等权的胜率差超过 1 个百分点, 第 9 节第 2 条需重写")
+    for f in ("paper.md", "paper.tex"):
+        must_contain(docs, f, "均不足 1 个百分点")
+
+
+def test_payment_to_rent(docs):
+    r = load("stress.json")["tier1_payment_to_rent"]
+    for f in ("paper.md", "paper.tex"):
+        must_contain(docs, f, f"{r:.2f} 倍")
+
+
+def test_rule_of_thumb_yield_threshold(docs):
+    """"不靠涨价也划算"的租金收益率分水岭: 论文/README/CLAUDE.md 引用的必须是解出来的数。"""
+    th = load("stress.json")["breakeven_yield_at_median_g"]
+    for f in ("paper.md", "paper.tex"):
+        must_contain(docs, f, f"约 {th['paper_rule_of_thumb'] * 100:.1f}%")
+        must_contain(docs, f, f"约 {th['china_2026'] * 100:.1f}%")
+    must_contain(docs, "README.md", f"≈{th['paper_rule_of_thumb'] * 100:.1f}%")
+    must_contain(docs, "README.md", f"约 {th['china_2026'] * 100:.1f}%")
+
+
+def test_readme_2026_guidance_numbers(docs):
+    """README 给 2026 年读者的"五个数"与三条路径引用的是 stress.json 里的值。"""
+    st = load("stress.json")
+    e = st["g_star_elasticity_pp"]
+    must_contain(docs, "README.md", f"涨幅降 {-e['rent_yield_+1pp']:.1f} 个百分点")
+    must_contain(docs, "README.md", f"打平涨幅升 {e['mort_rate_+1pp']:.2f} 个百分点")
+    c = st["cities"]
+    t1, t2 = c["一线城市(京沪广深)"], c["二线(成都武汉等)"]
+    must_contain(docs, "README.md", f"一线亏 {-t1['gap_median'] * 100:.0f}% 房价")
+    must_contain(docs, "README.md", f"一线亏 {-t1['gap_flat'] * 100:.0f}%、二线亏 {-t2['gap_flat'] * 100:.0f}%")
+    lo, hi = st["hedge_uplift_pp_range"]
+    assert 15 <= lo <= hi <= 25, "README 里'虚高约 20 个百分点'的说法需更新"

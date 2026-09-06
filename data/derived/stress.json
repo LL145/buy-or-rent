@@ -1,0 +1,198 @@
+{
+  "median_g10_real": 0.01079,
+  "japan_path_g_real": -0.02,
+  "cities": {
+    "一线城市(京沪广深)": {
+      "ry": 0.018,
+      "tercile": 2,
+      "gap_flat": -0.1642,
+      "gap_japan": -0.338,
+      "gap_median": -0.0563,
+      "sell_cost_5pct": {
+        "gap_flat": -0.1992,
+        "gap_japan": -0.3666
+      },
+      "p_buy_float": 0.3613,
+      "p_buy_if_historical_inflation": 0.5571,
+      "hedge_uplift_pp": 19.6,
+      "weighting": {
+        "window_weighted": 0.3613,
+        "country_weighted": 0.3655,
+        "by_country": {
+          "AUS": 0.682,
+          "BEL": 0.655,
+          "CHE": 0.409,
+          "DEU": 0.5,
+          "DNK": 0.333,
+          "ESP": 0.52,
+          "FIN": 0.263,
+          "FRA": 0.1,
+          "GBR": 0.323,
+          "ITA": 0.222,
+          "JPN": 0.471,
+          "NLD": 0.231,
+          "NOR": 0.424,
+          "PRT": 0.118,
+          "SWE": 0.464,
+          "USA": 0.133
+        },
+        "n_countries": 16
+      }
+    },
+    "强二线(杭州苏州)": {
+      "ry": 0.02,
+      "tercile": 2,
+      "gap_flat": -0.1425,
+      "gap_japan": -0.3163,
+      "gap_median": -0.0346,
+      "sell_cost_5pct": {
+        "gap_flat": -0.1775,
+        "gap_japan": -0.3449
+      },
+      "p_buy_float": 0.3939,
+      "p_buy_if_historical_inflation": 0.5967,
+      "hedge_uplift_pp": 20.3,
+      "weighting": {
+        "window_weighted": 0.3939,
+        "country_weighted": 0.3971,
+        "by_country": {
+          "AUS": 0.727,
+          "BEL": 0.69,
+          "CHE": 0.409,
+          "DEU": 0.5,
+          "DNK": 0.356,
+          "ESP": 0.52,
+          "FIN": 0.263,
+          "FRA": 0.167,
+          "GBR": 0.355,
+          "ITA": 0.278,
+          "JPN": 0.471,
+          "NLD": 0.282,
+          "NOR": 0.424,
+          "PRT": 0.176,
+          "SWE": 0.536,
+          "USA": 0.2
+        },
+        "n_countries": 16
+      }
+    },
+    "二线(成都武汉等)": {
+      "ry": 0.024,
+      "tercile": 2,
+      "gap_flat": -0.099,
+      "gap_japan": -0.2729,
+      "gap_median": 0.0089,
+      "sell_cost_5pct": {
+        "gap_flat": -0.134,
+        "gap_japan": -0.3015
+      },
+      "p_buy_float": 0.4639,
+      "p_buy_if_historical_inflation": 0.6783,
+      "hedge_uplift_pp": 21.4,
+      "weighting": {
+        "window_weighted": 0.4639,
+        "country_weighted": 0.4698,
+        "by_country": {
+          "AUS": 0.773,
+          "BEL": 0.724,
+          "CHE": 0.5,
+          "DEU": 0.625,
+          "DNK": 0.422,
+          "ESP": 0.6,
+          "FIN": 0.316,
+          "FRA": 0.233,
+          "GBR": 0.419,
+          "ITA": 0.444,
+          "JPN": 0.529,
+          "NLD": 0.41,
+          "NOR": 0.424,
+          "PRT": 0.294,
+          "SWE": 0.536,
+          "USA": 0.267
+        },
+        "n_countries": 16
+      }
+    },
+    "三四线(人口流出)": {
+      "ry": 0.022,
+      "tercile": 2,
+      "gap_flat": -0.1207,
+      "gap_japan": -0.2946,
+      "gap_median": -0.0129,
+      "sell_cost_5pct": {
+        "gap_flat": -0.1557,
+        "gap_japan": -0.3232
+      },
+      "p_buy_float": 0.4359,
+      "p_buy_if_historical_inflation": 0.6434,
+      "hedge_uplift_pp": 20.7,
+      "weighting": {
+        "window_weighted": 0.4359,
+        "country_weighted": 0.4387,
+        "by_country": {
+          "AUS": 0.773,
+          "BEL": 0.69,
+          "CHE": 0.455,
+          "DEU": 0.542,
+          "DNK": 0.4,
+          "ESP": 0.52,
+          "FIN": 0.316,
+          "FRA": 0.233,
+          "GBR": 0.419,
+          "ITA": 0.389,
+          "JPN": 0.529,
+          "NLD": 0.385,
+          "NOR": 0.424,
+          "PRT": 0.176,
+          "SWE": 0.536,
+          "USA": 0.233
+        },
+        "n_countries": 16
+      }
+    }
+  },
+  "hedge_uplift_pp_range": [
+    19.6,
+    21.4
+  ],
+  "tier1_payment_to_rent": 2.01,
+  "tier1_2021_vs_2026": {
+    "assumptions_2021": {
+      "rent_yield": 0.016,
+      "ry_typical": 0.024,
+      "down": 0.3,
+      "mort_rate": 0.053,
+      "mort_years": 30,
+      "buy_cost": 0.03,
+      "sell_cost": 0.02,
+      "carry": 0.007,
+      "infl": 0.02,
+      "g_rent": 0.02,
+      "r_invest": 0.045,
+      "hold": 10
+    },
+    "2021": {
+      "g_star_real": 0.0281,
+      "tercile": 2,
+      "p_hist_cond": 0.2184
+    },
+    "2026": {
+      "g_star_real": 0.016,
+      "tercile": 2,
+      "p_hist_cond": 0.3402
+    }
+  },
+  "g_star_elasticity_pp": {
+    "baseline_g_star_real": 0.0099,
+    "rent_yield_+1pp": -1.1,
+    "mort_rate_+1pp": 0.64,
+    "r_invest_+1pp": 0.48,
+    "g_rent_+1pp": -0.11,
+    "hold_10_to_5": 0.43,
+    "hold_10_to_20": -0.27
+  },
+  "breakeven_yield_at_median_g": {
+    "paper_rule_of_thumb": 0.0421,
+    "china_2026": 0.0232
+  }
+}

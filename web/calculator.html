@@ -1,5 +1,6 @@
 <title>买房还是租房</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<!-- 不外链字体: 主要读者在中国大陆, 对 fonts.googleapis.com 的请求常常挂到超时,
+     而外链样式表会阻塞首屏渲染。系统字体栈已经够用。 -->
 <style>
 :root{
   --ground:#EDF0F0; --surface:#FAFBFB; --raised:#FFFFFF;
@@ -10,8 +11,8 @@
   --warn:#8A6D1F;
   --serif:"Songti SC","STSong","Noto Serif CJK SC","Source Han Serif SC",Georgia,serif;
   --sans:"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC",system-ui,sans-serif;
-  --latin:"Newsreader",Georgia,serif;
-  --mono:"IBM Plex Mono","SF Mono",Menlo,monospace;
+  --latin:Georgia,"Times New Roman",serif;
+  --mono:"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
   color-scheme:light;
 }
 @media (prefers-color-scheme:dark){
@@ -145,6 +146,17 @@ tbody tr:last-child td{border-bottom:0}
 .foot a{color:var(--rent);text-decoration:underline;text-underline-offset:2px}
 .foot strong{color:var(--body)}
 .err{color:var(--buy);font-size:13px;margin-top:10px}
+
+/* ---------- red lines ---------- */
+.checks{list-style:none;margin:0;padding:0;font-size:13.5px}
+.checks li{display:flex;gap:10px;align-items:baseline;padding:7px 0;border-bottom:1px solid var(--hairline)}
+.checks li:last-child{border-bottom:0}
+.checks .mark{font-family:var(--mono);font-size:12px;font-weight:600;min-width:2.4em}
+.checks .ok .mark{color:var(--rent)}
+.checks .bad .mark{color:var(--buy)}
+.checks .na .mark{color:var(--faint)}
+.checks .bad{color:var(--ink)}
+.checks b{font-family:var(--mono);font-weight:500;font-variant-numeric:tabular-nums}
 </style>
 <!--HEAD-END-->
 <div class="wrap">
@@ -198,6 +210,12 @@ tbody tr:last-child td{border-bottom:0}
         <div class="inputrow"><input id="down" type="number" min="0" max="100" step="5" value="30"><span class="unit">%</span></div>
       </div>
 
+      <div class="field">
+        <label for="income">家庭税后月收入（选填）</label>
+        <div class="inputrow"><input id="income" type="number" min="0" step="1000" placeholder="留空则不检查"><span class="unit">元/月</span></div>
+        <span class="hint">只用来检查"月供不超过收入四成"这条红线，不进入概率计算。</span>
+      </div>
+
       <details class="adv">
         <summary>更多参数</summary>
         <div class="advbody">
@@ -242,6 +260,9 @@ tbody tr:last-child td{border-bottom:0}
       <div class="derived" style="border-top:0;padding-top:0;margin-top:6px">
         <span>估值分组</span><b id="tercOut">—</b>
       </div>
+      <div class="derived" style="border-top:0;padding-top:0;margin-top:6px">
+        <span>每月月供</span><b id="payOut">—</b>
+      </div>
       <div class="err" id="err" hidden></div>
     </form>
 
@@ -249,6 +270,12 @@ tbody tr:last-child td{border-bottom:0}
       <section class="verdict" id="verdict" style="--edge:var(--rent)">
         <p class="vtag" id="vtag">正在计算…</p>
         <p id="vtext"></p>
+      </section>
+
+      <section class="card" style="--edge:var(--warn)">
+        <h2>先过红线，再看概率</h2>
+        <ul class="checks" id="checks"></ul>
+        <p class="note">这三条不依赖任何预测，优先于下面所有概率。另外两条页面算不了：别掏空应急储备凑首付；只买现房或二手，不碰高风险期房。</p>
       </section>
 
       <section class="card" style="--edge:var(--rent)">
@@ -306,6 +333,17 @@ tbody tr:last-child td{border-bottom:0}
         <p class="note" id="gapNote"></p>
       </section>
 
+      <section class="card" style="--edge:var(--buy)">
+        <h2 id="stressHead">如果房价走了这三条路</h2>
+        <div class="tblwrap">
+          <table>
+            <thead><tr><th>房价路径（扣通胀后，每年）</th><th>买比租多出（少掉）</th><th>折成钱</th></tr></thead>
+            <tbody id="stressBody"></tbody>
+          </table>
+        </div>
+        <p class="note" id="stressNote"></p>
+      </section>
+
       <footer class="foot">
         <p><strong>这个页面在算什么。</strong>把你的数字代入终值财富模型，解出"买房要打平、房价需要每年涨多少"，
           再去 1870 年以来 16 个国家的全部历史窗口里数：这个涨幅实际出现过几次。
@@ -317,6 +355,8 @@ tbody tr:last-child td{border-bottom:0}
         <p><strong>默认口径是 2026 年的中国。</strong>浮动利率按揭、契税下调后的交易成本、无持有环节房产税、通胀 0.5%、租房者的钱只能拿到存款理财级别的真实收益。
           换到固定利率市场（美国式 30 年锁定），把"按揭利率类型"切到固定：胜率会改按 1870 年以来各窗口的实际通胀与股六债四回报联合计算——这正是论文第 7 节画像 B 的口径。
           持有期只有 5、10、15、20 年四档历史窗口，你填的年数会按最接近的一档查历史，页面上会标出用的是哪一档。</p>
+        <p><strong>判词的规则。</strong>浮动利率口径下，每个判词都对两档租房投资收益率同时算（你填的那档，和高 1.5 个百分点的那档），两档同向才下结论——和论文 8.4 节速查表同一条规则。
+          "不裁决"不是"随便"，是金融账分不出胜负，该由你有多想要稳定、多需要随时能走来定。</p>
         <p><strong>一条不依赖任何预测的结论：</strong>打算住不到五年，交易成本基本已经判了买房输，不用看概率。</p>
         <p>方法与全部数据见 <a href="https://github.com/LL145/buy-or-rent">github.com/LL145/buy-or-rent</a>。
           数据来源 Jordà-Schularick-Taylor Macrohistory Database R6。本页不构成投资建议。</p>
@@ -466,6 +506,39 @@ function evaluate(s, tercile){
   };
 }
 
+/* ---------- 判词 ----------
+   与论文 8.4 节速查表同一条规则, 只是多要求区间:
+   浮动利率口径下, 租方投资收益率因人而异且难以自知, 所以每个判词都对
+   两档收益率同时算(你填的那档, 以及高 1.5 个百分点的那档——默认 1.5%/3.0%,
+   正是论文的"稳健带"), 两档同向才下结论:
+     偏租: 你填的那档(对买方更有利的一档)整个 95% 区间都在 45% 以下
+     偏买: 你填的那档整个 95% 区间都在 55% 以上, 且高一档的点估计也 ≥55%
+     其余: 金融账不裁决
+   固定利率口径下投资收益取自历史窗口, 没有第二档, 只按区间判。 */
+const BAND_STEP = 0.015;
+const PAY_SHARE_MAX = 0.40;   /* 红线 2: 月供不超过税后收入四成 */
+function verdictFor(hold, ciA, pB, payShare = null){
+  if (hold < 5) return "short";
+  if (payShare !== null && payShare > PAY_SHARE_MAX) return "income";
+  const [lo, hi] = ciA;
+  if (hi < 0.45) return "rent";
+  if (lo > 0.55 && (pB === null || pB >= 0.55)) return "buy";
+  return "open";
+}
+
+/* ---------- 命名路径: 房价横盘 / 日本路径 / 历史中位 ----------
+   确定性求值, 与论文 8.2 节压力表同一口径(analysis/stress.py): 通胀与租金涨幅
+   取页面上的固定值, 租方收益取你填的那档。 */
+const JAPAN_G = -0.02;
+function stressPaths(s, medianG){
+  const sDet = { ...s, rInvest: nominal(s.rInvestReal, s.inflFixed), infl: s.inflFixed };
+  return [
+    { label: "历史中位路径", g: medianG },
+    { label: "房价横盘", g: 0 },
+    { label: "日本路径", g: JAPAN_G },
+  ].map(p => ({ ...p, gap: simulate({ ...sDet, gHouse: nominal(p.g, s.inflFixed) }).gapReal }));
+}
+
 /* ---------- 视图 ---------- */
 const $ = id => document.getElementById(id);
 const pct = (x, d = 0) => (x * 100).toFixed(d) + "%";
@@ -512,9 +585,18 @@ function compute(){
   const unc = probExceed(gStarReal, hold, null);
   const cond = tercile === null ? null : probExceed(gStarReal, hold, tercile);
   const mc = evaluate(s, tercile);
+  /* 第二档: 租方收益高 1.5 个百分点。固定利率口径下收益来自历史窗口, 无第二档 */
+  const mcB = fixedRate ? null
+    : evaluate({ ...s, rInvestReal: s.rInvestReal + BAND_STEP }, tercile);
+  const k = snapHorizon(hold);
+  const paths = stressPaths(s, DATA.median_g[String(k)]);
+  const payMonthly = annuityPayment((1 - s.down) * price, s.mortRate, s.mortYears) / 12;
+  const income = num("income");
 
-  render({ rentYield, tercile, gStarReal, unc, cond, mc, hold,
-           k: snapHorizon(hold), fixedRate });
+  render({ rentYield, tercile, gStarReal, gStarTruncated: gStarNom <= -0.20 || gStarNom >= 0.25,
+           unc, cond, mc, mcB, hold, k, fixedRate, paths, price, rentM,
+           payMonthly, income: income > 0 ? income : null,
+           rInvestReal: s.rInvestReal });
 }
 
 function setBand(trackId, fillId, tickId, lo, hi, point, min, max){
@@ -524,9 +606,33 @@ function setBand(trackId, fillId, tickId, lo, hi, point, min, max){
   $(tickId).style.left = "calc(" + f(point) + "% - 1.5px)";
 }
 
+const yuan = x => {
+  const a = Math.abs(x);
+  return a >= 1e4 ? (x / 1e4).toFixed(a >= 1e5 ? 0 : 1) + " 万元" : Math.round(x) + " 元";
+};
+
 function render(r){
   $("ryOut").textContent = pct(r.rentYield, 2);
   $("tercOut").textContent = r.tercile === null ? "未指定" : TERC[r.tercile];
+  $("payOut").textContent = `${Math.round(r.payMonthly).toLocaleString("en-US")} 元`;
+
+  /* 红线: 论文 8.3 节的四条里, 页面能算的三条 */
+  const ratio = r.payMonthly / r.rentM;
+  const checks = [
+    r.hold < 5
+      ? { cls: "bad", mark: "✗", html: `打算住 <b>${r.hold}</b> 年，不足 5 年。买卖一次的交易成本摊不薄，租。` }
+      : { cls: "ok", mark: "✓", html: `打算住 <b>${r.hold}</b> 年，达到 5 年门槛。` },
+    r.income === null
+      ? { cls: "na", mark: "—", html: `月供 <b>${Math.round(r.payMonthly).toLocaleString("en-US")}</b> 元。填了税后月收入才能检查"月供不超过收入四成"。` }
+      : (r.payMonthly / r.income > PAY_SHARE_MAX
+          ? { cls: "bad", mark: "✗", html: `月供占税后收入 <b>${pct(r.payMonthly / r.income)}</b>，超过四成。这是每个月都要赢的账，被迫中途卖出会把左尾变成现实。` }
+          : { cls: "ok", mark: "✓", html: `月供占税后收入 <b>${pct(r.payMonthly / r.income)}</b>，在四成以内。` }),
+    ratio >= 1.5
+      ? { cls: "bad", mark: "!", html: `月供是同等房屋月租的 <b>${ratio.toFixed(1)}</b> 倍——这个价位上是房东在补贴租客，买房的全部逻辑都押在涨价上。` }
+      : { cls: "ok", mark: "✓", html: `月供是同等房屋月租的 <b>${ratio.toFixed(1)}</b> 倍。` },
+  ];
+  $("checks").innerHTML = checks.map(c =>
+    `<li class="${c.cls}"><span class="mark">${c.mark}</span><span>${c.html}</span></li>`).join("");
   $("gYears").textContent = r.hold;
   $("gapHead").textContent = `${r.hold} 年后，买比租多出（少掉）多少钱`;
   /* 历史窗口只有 5/10/15/20 年四档; 用了哪一档必须写在脸上, 不能静默取整 */
@@ -545,16 +651,28 @@ function render(r){
     + (r.fixedRate ? "（固定利率口径：通胀与股债回报取各窗口的实际值）" : "")
     + `，买房财富胜过租房的占 `
     + `<b>${pct(r.mc.p)}</b>。区间宽 ${width.toFixed(0)} 个百分点——`
-    + `这个数只能读到十位，把 ${pct(r.mc.p)} 和 ${pct(Math.min(0.99, r.mc.p + 0.05))} 当成不同答案是过度解读。`;
+    + `这个数只能读到十位，把 ${pct(r.mc.p)} 和 ${pct(Math.min(0.99, r.mc.p + 0.05))} 当成不同答案是过度解读。`
+    + (r.mcB ? `<br>如果你租房时的钱能多拿 1.5 个百分点（真实 ${pct(r.rInvestReal + BAND_STEP, 1)}），胜率降到 <b>${pct(r.mcB.p)}</b>——判词要求两档同向。` : "");
 
   /* 盈亏平衡 */
   $("gStar").textContent = signed(r.gStarReal, 1);
   /* 历史中位涨幅由嵌入的数据算出(分持有期), 不手写 */
   const med = DATA.median_g[String(r.k)];
   const medTxt = signed(med, 1);
-  $("gNote").innerHTML = r.gStarReal <= med
+  $("gNote").innerHTML = (r.gStarTruncated
+    ? `<b>这个数触到了求解范围的边界（−20% 到 +25%）</b>，真实值在范围之外，下面的频率按边界值查。`
+    : "")
+    + (r.gStarReal <= med
     ? `低于 1870 年以来 ${r.k} 年期窗口的历史中位涨幅（${medTxt}）——<b>买房打平不要求房价跑赢历史平均</b>，这是最关键的分界线。`
-    : `高于 1870 年以来 ${r.k} 年期窗口的历史中位涨幅（${medTxt}）——<b>买房划算的前提是房价跑赢历史平均水平</b>。`;
+    : `高于 1870 年以来 ${r.k} 年期窗口的历史中位涨幅（${medTxt}）——<b>买房划算的前提是房价跑赢历史平均水平</b>。`);
+
+  /* 命名路径 */
+  $("stressHead").textContent = `如果房价走了这三条路，${r.hold} 年后`;
+  $("stressBody").innerHTML = r.paths.map(p =>
+    `<tr><td>${p.label}（${signed(p.g, 1)}）</td><td>${signed(p.gap)}</td><td>${yuan(p.gap * r.price)}</td></tr>`).join("");
+  $("stressNote").innerHTML = `以房价的百分比计，扣通胀后。历史中位是 1870 年以来 ${r.k} 年期窗口的中位涨幅；`
+    + `日本路径是 1990 年后日本十年的真实年化跌幅取整。中国 2026 与日本 1992 年的相似处（人口负增长、通缩压力、高库存）`
+    + `和不同处（核心城市已先跌两三成、按揭利率已在低位）都摆在明面上——<b>你对"中国是不是日本"的判断，就是这张表里最大的变量</b>。`;
   $("hUnc").textContent = pct(r.unc.p);
   $("hUncCI").textContent = `${pct(r.unc.ci[0])} – ${pct(r.unc.ci[1])}`;
   if (r.cond){
@@ -577,24 +695,35 @@ function render(r){
     + `<b>${signed(r.mc.p5)}</b> 到 <b>${signed(r.mc.p95)}</b> 之间。`
     + `左端就是你要能扛住的那一面——买房加了杠杆，亏损按房价全额计，不按首付计。`;
 
-  /* 判词: 用区间而不是点估计下判断 */
+  /* 判词: 用区间而不是点估计下判断, 且两档投资收益率同向才下结论 */
   const v = $("verdict"), lo95 = r.mc.ci[0], hi95 = r.mc.ci[1];
+  const pB = r.mcB ? r.mcB.p : null;
+  const payShare = r.income === null ? null : r.payMonthly / r.income;
+  const key = verdictFor(r.hold, r.mc.ci, pB, payShare);
   let edge, tag, text;
-  if (r.hold < 5){
+  if (key === "short"){
     edge = "var(--rent)"; tag = "住不到五年 —— 租";
     text = `持有 ${r.hold} 年，买卖一次的交易成本要摊到这么短的时间里。`
          + `这是全篇最不依赖预测的结论：不用看概率，租。`;
-  } else if (hi95 < 0.45){
+  } else if (key === "income"){
+    edge = "var(--rent)"; tag = "月供超过收入四成 —— 先别买";
+    text = `月供 ${Math.round(r.payMonthly).toLocaleString("en-US")} 元占税后收入 ${pct(payShare)}。`
+         + `概率再好看也是十年后的事，月供是每个月都要赢的账；被迫中途卖出会把下面那条带子的左端变成现实。`
+         + `红线优先于概率——降总价、提首付，或者租。`;
+  } else if (key === "rent"){
     edge = "var(--rent)"; tag = "金融账偏租";
     text = `买房胜率的整个 95% 区间都在五五开以下（${pct(lo95)}–${pct(hi95)}）。`
          + `要买，理由得来自金融账之外：学区、户口、居住稳定。`;
-  } else if (lo95 > 0.55){
+  } else if (key === "buy"){
     edge = "var(--buy)"; tag = "金融账偏买";
-    text = `买房胜率的整个 95% 区间都在五五开以上（${pct(lo95)}–${pct(hi95)}）。`
+    text = `买房胜率的整个 95% 区间都在五五开以上（${pct(lo95)}–${pct(hi95)}）`
+         + (pB !== null ? `，租房的钱多拿 1.5 个百分点也仍有 ${pct(pB)}` : "") + `。`
          + `在你填的这些数字下，买房不必依赖房价大涨就划算。`;
   } else {
     edge = "var(--warn)"; tag = "金融账不裁决";
-    text = `胜率区间 ${pct(lo95)}–${pct(hi95)} 横跨五五开，数据分不出胜负。`
+    text = (lo95 > 0.55 && pB !== null
+         ? `按你填的收益率，胜率区间 ${pct(lo95)}–${pct(hi95)} 在五五开以上；但租房的钱若多拿 1.5 个百分点，胜率只有 ${pct(pB)}。结论取决于你到底能拿到多少收益，数据裁不了。`
+         : `胜率区间 ${pct(lo95)}–${pct(hi95)} 横跨五五开，数据分不出胜负。`)
          + `这不是"随便"，而是<b>该由非金融因素定夺</b>：`
          + `你有多想要稳定，和你有多需要随时能走。`;
   }
