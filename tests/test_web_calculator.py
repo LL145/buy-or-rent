@@ -54,7 +54,7 @@ LOOKUP_COMMON = dict(down=0.30, mort_rate=0.031, mort_years=30, buy_cost=0.025,
                      sell_cost=0.015, carry=0.007, r_invest_real=0.015,
                      infl_fixed=0.005, tercile=None)
 LOOKUP_CELLS = [dict(rent_yield=ry, hold=h, **LOOKUP_COMMON)
-                for h in (3, 5, 10, 15, 20)
+                for h in (5, 10, 15, 20)
                 for ry in (0.015, 0.020, 0.025, 0.030, 0.040, 0.050)]
 
 pytestmark = pytest.mark.skipif(

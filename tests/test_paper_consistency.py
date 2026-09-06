@@ -197,15 +197,63 @@ def test_china_tier_intervals_overlap():
     assert first[1] > second[0], "一线与二线的区间不再重叠, 第8.2节读表须知需重写"
 
 
-# ------------------------------------------------------------ 8.4 速查表
-def test_lookup_table_cells(docs):
+# ------------------------------------------------------------ 8.4 速查表组
+LOOKUP_YIELDS = (0.015, 0.020, 0.025, 0.030, 0.040, 0.050)
+LOOKUP_HOLDS = (5, 10, 15, 20)
+
+
+def pct0(v: float) -> str:
+    """表 B 的格式: 整数百分点, 带符号, 零不带符号(不写成 -0)。"""
+    s = f"{round(v * 100):+d}"
+    return "0" if s in ("+0", "-0") else s
+
+
+def test_lookup_table_a_cells(docs):
+    """表 A: 每格 (保守/均衡) 都要在两份文档里, 判定与 JSON 一致, † 只标在翻转格上。"""
     g = load("lookup_table.json")
-    for ry in (0.015, 0.020, 0.025, 0.030, 0.040, 0.050):
-        for h in (3, 5, 10, 15, 20):
+    flips = {(f["hold"], f["rent_yield"]) for f in g["_valuation_shift_pp"]["verdict_flips"]}
+    assert "3|0.015" not in g, "持有 3 年不应入表: 红线 1 优先"
+    for ry in LOOKUP_YIELDS:
+        for h in LOOKUP_HOLDS:
             c = g[f"{h}|{ry}"]
-            cell = f"({c['p_cons'] * 100:.0f}/{c['p_bal'] * 100:.0f})"
-            assert cell in docs["paper.md"], (
-                f"8.4 速查表缺少格子 ry={ry:.1%} hold={h}: {cell}")
+            dag = "†" if (h, ry) in flips else ""
+            cell = f"{c['verdict']}{dag} ({c['p_cons'] * 100:.0f}/{c['p_bal'] * 100:.0f})"
+            for f in ("paper.md", "paper.tex"):
+                must_contain(docs, f, cell, f"表 A 格子 ry={ry:.1%} hold={h}")
+
+
+def test_lookup_table_b_cells(docs):
+    """表 B: 同一格子的三条命名路径, 与 stress.py 同一定义。"""
+    g = load("lookup_table.json")
+    for ry in LOOKUP_YIELDS:
+        for h in LOOKUP_HOLDS:
+            p = g[f"{h}|{ry}"]["paths"]
+            cell = f"{pct0(p['median'])} / {pct0(p['flat'])} / {pct0(p['japan'])}"
+            for f in ("paper.md", "paper.tex"):
+                must_contain(docs, f, cell, f"表 B 格子 ry={ry:.1%} hold={h}")
+    med = " / ".join(f"+{g['_median_g_real'][str(h)] * 100:.1f}%" for h in LOOKUP_HOLDS)
+    for f in ("paper.md", "paper.tex"):
+        must_contain(docs, f, f"分别为 {med}", "表 B 说明里各持有期的历史中位涨幅")
+    # 表 B 与 stress.py 的十年中位涨幅是同一个数
+    assert g["_median_g_real"]["10"] == pytest.approx(load("stress.json")["median_g10_real"], abs=1e-4)
+
+
+def test_lookup_table_valuation_footnote(docs):
+    """† 脚注: 高估组条件化后胜率低多少、哪些格子翻转, 都是算出来的。"""
+    v = load("lookup_table.json")["_valuation_shift_pp"]
+    # 条件化只能朝对买方不利的方向翻转判定(否则 8.4 的"偏保守"表述需重写)
+    rank = {"租": 0, "中性": 1, "买": 2}
+    for f in v["verdict_flips"]:
+        assert rank[f["high_tercile"]] < rank[f["uncond"]], f
+    assert v["high_tercile_minus_uncond_median"] < 0
+    n = len(v["verdict_flips"])
+    cn = "零一二三四五六七八九十"[n] if n <= 10 else str(n)
+    lo, hi = v["range"]
+    for f in ("paper.md", "paper.tex"):
+        must_contain(docs, f, f"中位低 {-v['high_tercile_minus_uncond_median']:.1f} 个百分点")
+        must_contain(docs, f, f"各格从 {lo:.1f} 到 {hi:+.1f}")
+        must_contain(docs, f, f"持有 10 年的格子中位低 {-v['by_hold_median']['10']:.1f} 个百分点")
+        must_contain(docs, f, f"带 † 的{cn}格")
 
 
 # ---------------------------------------------------------------- README
@@ -264,13 +312,16 @@ def test_stress_scenarios_table(docs):
     """横盘 / 日本路径 / 历史中位 三条命名路径的财富差, 过去是手算抄进正文的。"""
     st = load("stress.json")
     order = ["一线城市(京沪广深)", "强二线(杭州苏州)", "二线(成都武汉等)", "三四线(人口流出)"]
+    short = ["一线", "强二线", "二线", "三四线"]
     cities = [st["cities"][k] for k in order]
     for key, label in (("gap_median", "历史中位路径"), ("gap_flat", "房价横盘"),
                        ("gap_japan", "日本路径")):
-        row = " | ".join(f"{c[key]:+.0%}" for c in cities)
-        assert norm(row) in docs["paper.md"], f"8.2 节压力表的 {label} 行与 stress.json 不一致: {row}"
-    # 历史中位路径的年化涨幅要写在表头里
-    must_contain(docs, "paper.md", f"真实 +{st['median_g10_real'] * 100:.1f}%/年")
+        sent = "、".join(f"{n} {c[key]:+.0%}" for n, c in zip(short, cities))
+        for f in ("paper.md", "paper.tex"):
+            must_contain(docs, f, sent, f"8.2 节 {label} 的四城数字")
+    # 历史中位路径的年化涨幅要写在句子里
+    for f in ("paper.md", "paper.tex"):
+        must_contain(docs, f, f"真实 +{st['median_g10_real'] * 100:.1f}%/年")
     # 三四线按卖出成本 5% 重算的两个数
     t34 = st["cities"]["三四线(人口流出)"]["sell_cost_5pct"]
     for f in ("paper.md", "paper.tex"):

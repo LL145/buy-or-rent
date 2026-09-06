@@ -45,7 +45,7 @@
 |---|---|
 | `paper/paper.md` | 论文初稿（真源）；`paper.tex` 是手工维护的镜像（没有自动转换），`paper/build.sh` 编译出 `paper.pdf`。改 md 必须同步改 tex，`tests/test_paper_consistency.py` 对两者都检查 |
 | `docs/research-framework.md` | 研究框架（写于实证之前的设计记录）：变量三分法、文献、算法设计、未采用的候选变量 |
-| `analysis/` | 实证脚本：`stylized_facts.py`（六个典型事实、生成 `windows.csv`）、`uncertainty.py`（聚类标准误与整群自助区间）、`cases.py`（第 7 节画像）、`china_2026.py`（第 8 节，含估值假设敏感性）、`lookup_table.py`（8.4 速查表，含每格区间）、`stress.py`（第 8 节压力表、2021 对照、g\* 弹性、浮动利率修正大小、国家等权稳健性——正文里所有"手算"数字的出处）、`algorithm_figures.py`、`build_web.py` |
+| `analysis/` | 实证脚本：`stylized_facts.py`（六个典型事实、生成 `windows.csv`）、`uncertainty.py`（聚类标准误与整群自助区间）、`cases.py`（第 7 节画像）、`china_2026.py`（第 8 节，含估值假设敏感性）、`lookup_table.py`（8.4 速查表组：表 A 判定、表 B 三条路径代价、每格区间、高估组条件化后的判定翻转）、`stress.py`（第 8 节压力表、2021 对照、g\* 弹性、浮动利率修正大小、国家等权稳健性——正文里所有"手算"数字的出处）、`algorithm_figures.py`、`build_web.py` |
 | `buyrent/` | 算法包：`model.py` `breakeven.py` `history.py` `montecarlo.py` `bootstrap.py`。<br>无命令行入口——面向使用者的是网页，本包是论文与网页数据背后的引擎 |
 | `web/` | 网页计算器：`calculator.template.html` 是真源，`index.html`（Pages）与 `calculator.html`（Artifact）由 `analysis/build_web.py` 生成。默认口径是 2026 年中国（浮动利率）；有固定利率开关对应 `run()` 默认路径。页面里不手写任何派生数字（中位涨幅、国家数都由嵌入数据算出）。判词规则 `verdictFor` 与论文 8.4 速查表同源（两档投资收益率同向 + 区间 + 红线优先），`tests/test_web_calculator.py` 断言网页判词绝不比速查表激进。**不外链字体或脚本**：主要读者在中国大陆 |
 | `data/derived/` | 入库的派生统计量（原始 JST 数据不入库，用 `data/download.sh` 下载） |
@@ -68,8 +68,9 @@
 
 ## 当前状态（截至 2026-09）
 
-论文十节已成稿，含 2026 年中国案例研究（分城市 × 分年龄 × 分收入建议矩阵、
-"租金收益率 × 持有期"二因素速查表、三条命名路径的压力表）。核心经验法则：按揭 4.5%、首付三成时，
+论文十节已成稿，含 2026 年中国案例研究（分城市结果、分人群建议，以及 8.4 节**唯一一组**面向读者的速查表：
+表 A 判定 + 表 B 三条路径代价，共用"租金收益率 × 持有期"格子，持有期从 5 年起，† 标出高估组条件化后判定翻转的格子。
+论文里不再另设按城市或按年龄的速查矩阵——所有分人群结论都折到这两个轴和四条红线上）。核心经验法则：按揭 4.5%、首付三成时，
 **租金收益率 ≈4.2% 是买房不靠涨价也划算的分水岭**（2026 年中国口径约 2.3%）；持有期不足 5 年交易成本
 几乎注定租房更优。第 8 节中国案例的"常态租金收益率"是假设，8.2 节末已报告其翻转门槛与
 敏感性（二线离门槛只有几个基点；所有敏感性只朝利好买方方向移动）。
